@@ -37,6 +37,7 @@
   .login-screen{
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     min-height:100vh; padding:20px; text-align:center;
+    background:var(--bg);
   }
   .login-screen h1{font-size:32px; margin:0 0 10px; letter-spacing:.3px}
   .login-screen p{color:var(--subtle); margin:0 0 40px; font-size:16px}
@@ -48,6 +49,32 @@
     transition:all 0.2s;
   }
   .login-btn:active{transform:scale(0.98); background:var(--brand); color:#0b1020}
+
+  /* Settings Menu */
+  .settings-toggle{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:10px;
+    border-radius:8px;
+    font-size:20px;
+    cursor:pointer;
+  }
+
+  .settings-panel{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:8px;
+    padding:12px;
+    background:var(--muted);
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+
+  .settings-panel.hidden{
+    display:none;
+  }
 
   .app{
     max-width:100%; margin:0; padding:0 0 80px;
@@ -213,8 +240,8 @@
 
   /* Swipe card specific */
   .swipe-card .media{
-    height:60%;
-    min-height:300px;
+    height:50%;
+    min-height:250px;
   }
 
   .swipe-card .media img{
@@ -224,10 +251,10 @@
   }
 
   .swipe-card .card-body{
-    height:40%;
+    height:50%;
     display:flex;
     flex-direction:column;
-    padding:20px;
+    padding:16px;
     overflow-y:auto;
   }
 
@@ -235,14 +262,89 @@
     font-size:18px;
     font-weight:700;
     line-height:1.4;
-    margin:0 0 16px;
+    margin:0 0 12px;
+    flex-shrink:0;
   }
 
-  .swipe-card .notes-text{
+  .swipe-card .rating-badge{
+    display:inline-block;
+    background:var(--accent);
+    color:#0f172a;
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+
+  /* Chat bubbles */
+  .comments-section{
+    flex:1;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:8px;
+  }
+
+  .comment{
+    max-width:85%;
+    padding:10px 12px;
+    border-radius:12px;
     font-size:14px;
+    line-height:1.4;
+    word-wrap:break-word;
+  }
+
+  .comment.person1{
+    align-self:flex-start;
+    background:linear-gradient(135deg, #1e3a5f, #2a4a70);
+    border:1px solid #3a5a80;
+  }
+
+  .comment.person2{
+    align-self:flex-end;
+    background:linear-gradient(135deg, #2d1f4a, #3a2a5a);
+    border:1px solid #4a3a6a;
+  }
+
+  .comment-author{
+    font-size:11px;
     color:var(--subtle);
-    line-height:1.5;
-    margin-top:12px;
+    margin-bottom:4px;
+    font-weight:600;
+  }
+
+  .comment-text{
+    color:var(--text);
+  }
+
+  .comment-input-wrapper{
+    margin-top:8px;
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+
+  .comment-input{
+    flex:1;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:14px;
+    outline:none;
+  }
+
+  .comment-send{
+    background:var(--brand);
+    color:#0b1020;
+    border:none;
+    border-radius:8px;
+    padding:8px 16px;
+    font-weight:700;
+    cursor:pointer;
   }
 
   /* Action buttons for swipe mode */
@@ -324,28 +426,6 @@
   .stars .s{font-size:20px; color:#334155}
   .stars .s.f{color:#fbbf24}
   .peer{font-size:13px; color:var(--subtle); font-weight:600}
-
-  /* Reactions */
-  .reactions{
-    display:flex; gap:8px; padding:10px 14px; border-top:1px dashed var(--border);
-    flex-wrap:wrap; align-items:center;
-  }
-  .reaction{
-    display:flex; align-items:center; gap:4px;
-    background:var(--chip-bg); border:1px solid #1f3550;
-    border-radius:20px; padding:6px 10px; cursor:pointer;
-    font-size:16px; transition:all 0.2s;
-  }
-  .reaction:active{background:#1a2f4a; transform:scale(0.95)}
-  .reaction.active{background:#1f4788; border-color:var(--brand)}
-  .reaction-count{font-size:12px; color:var(--subtle); font-weight:700}
-  .add-reaction{
-    background:transparent; border:1px dashed var(--border);
-    color:var(--subtle); font-size:20px; width:36px; height:36px;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:50%; cursor:pointer; transition:all 0.2s;
-  }
-  .add-reaction:active{border-color:var(--brand); color:var(--brand); transform:scale(0.95)}
 
   /* Row actions */
   .row-actions{
@@ -445,11 +525,14 @@
   <header>
     <div class="title">
       <h1>What if we…</h1>
-      <button class="btn ghost" onclick="auth.logout()">Switch User</button>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
+        <button class="btn ghost" onclick="auth.logout()">Switch User</button>
+      </div>
     </div>
-    <div class="controls">
-      <input class="field" id="q" placeholder="Search…" oninput="ui.render()">
-      <select class="select" id="sort" onchange="ui.render()">
+    <div class="settings-panel hidden" id="settingsPanel">
+      <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
+      <select class="select" id="sort" onchange="ui.renderCurrent()">
         <option value="date_desc">Newest</option>
         <option value="date_asc">Oldest</option>
         <option value="my_rating_desc">My rating ↓</option>
@@ -457,7 +540,6 @@
         <option value="avg_desc">Avg rating ↓</option>
         <option value="avg_asc">Avg rating ↑</option>
       </select>
-      <button class="btn primary" onclick="ui.openForm()">+ Add</button>
     </div>
   </header>
 
@@ -468,8 +550,10 @@
     </div>
     <div class="seg">
       <button class="active" id="viewAll" onclick="ui.setView('all')">All Ideas</button>
+      <button id="viewDeclined" onclick="ui.setView('declined')">Declined</button>
       <button id="viewWould" onclick="ui.setView('would')">Would ✅</button>
     </div>
+    <button class="btn primary" onclick="ui.openForm()" style="margin-left:auto">+ Add</button>
   </div>
 
   <!-- Swipe Mode -->
@@ -616,12 +700,9 @@ const auth = {
     document.getElementById('loginScreen').classList.remove('hidden');
   },
   checkLogin() {
-    const savedUser = localStorage.getItem('loggedInUser');
-    if (savedUser) {
-      this.login(savedUser);
-    } else {
-      document.getElementById('loginScreen').classList.remove('hidden');
-    }
+    // Always show login screen on refresh
+    localStorage.removeItem('loggedInUser');
+    document.getElementById('loginScreen').classList.remove('hidden');
   }
 };
 
@@ -849,11 +930,22 @@ const filters = {
   apply(arr){
     let out = arr;
 
-    // Filter by view (all vs would)
+    // Filter by view
     if (state.view === 'would') {
       out = out.filter(i => i.completed === true);
+    } else if (state.view === 'declined') {
+      // Declined = rated 1-2 stars by current user
+      out = out.filter(i => {
+        const myRating = i.ratings?.[state.user] || 0;
+        return myRating >= 1 && myRating <= 2 && !i.completed;
+      });
     } else {
-      out = out.filter(i => !i.completed);
+      // All = not completed and not declined (0 or 3+ rating)
+      out = out.filter(i => {
+        if (i.completed) return false;
+        const myRating = i.ratings?.[state.user] || 0;
+        return myRating === 0 || myRating >= 3;
+      });
     }
 
     const q = state.query.trim().toLowerCase();
@@ -882,6 +974,17 @@ const filters = {
 
 /* ---------- UI ---------- */
 const ui = {
+  toggleSettings(){
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('hidden');
+  },
+  renderCurrent(){
+    if (state.mode === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
+  },
   setMode(m){
     state.mode = m;
     document.getElementById('modeSwipe').classList.toggle('active', m==='swipe');
@@ -899,6 +1002,7 @@ const ui = {
   setView(v){
     state.view = v;
     document.getElementById('viewAll').classList.toggle('active', v==='all');
+    document.getElementById('viewDeclined').classList.toggle('active', v==='declined');
     document.getElementById('viewWould').classList.toggle('active', v==='would');
 
     if (state.mode === 'swipe') {
@@ -944,10 +1048,16 @@ const ui = {
   },
   renderSwipe(){
     const stack = document.getElementById('swipeStack');
-    const list = filters.apply(state.ideas).filter(i => (i.ratings?.[state.user] || 0) === 0);
+    const list = filters.apply(state.ideas);
 
     if (list.length === 0) {
-      stack.innerHTML = '<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">All caught up! 🎉<br><br>You\'ve rated all ideas.</div>';
+      let message = 'No ideas yet!';
+      if (state.view === 'declined') {
+        message = 'No declined ideas.<br><br>Swipe left to decline ideas.';
+      } else if (state.view === 'would') {
+        message = 'No completed ideas.<br><br>Check off ideas you\'ve done!';
+      }
+      stack.innerHTML = `<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">${message}</div>`;
       return;
     }
 
@@ -976,17 +1086,27 @@ const ui = {
   swipeCard(idea){
     const thumb = getThumb(idea);
     const otherUser = state.user==='person1'?'person2':'person1';
-    const isNewForMe = idea.createdBy && idea.createdBy === otherUser;
+    const myRating = idea.ratings?.[state.user] || 0;
+    const isUnrated = myRating === 0;
 
     const media = thumb ? `
       <div class="media">
         <img src="${esc(thumb)}" alt="" />
-        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
       </div>` : `
       <div class="media" style="background:linear-gradient(135deg, #0f2238, #1a3a52)">
-        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
         <div style="font-size:48px; opacity:0.3">💭</div>
       </div>`;
+
+    // Render comments
+    const comments = idea.comments || [];
+    const commentsHtml = comments.map(c => `
+      <div class="comment ${c.user}">
+        <div class="comment-author">${users[c.user]}</div>
+        <div class="comment-text">${esc(c.text)}</div>
+      </div>
+    `).join('');
 
     return `
       <div class="swipe-card" data-id="${idea.id}">
@@ -995,7 +1115,14 @@ const ui = {
         ${media}
         <div class="card-body">
           <p class="desc">${esc(idea.description)}</p>
-          ${idea.notes ? `<div class="notes-text">📝 ${esc(idea.notes)}</div>` : ''}
+          ${!isUnrated ? `<span class="rating-badge">You rated: ${'★'.repeat(myRating)}</span>` : ''}
+          <div class="comments-section">
+            ${commentsHtml}
+          </div>
+          <div class="comment-input-wrapper">
+            <input type="text" class="comment-input" id="commentInput_${idea.id}" placeholder="Add a comment..." onkeydown="if(event.key==='Enter') comments.add('${idea.id}')">
+            <button class="comment-send" onclick="comments.add('${idea.id}')">Send</button>
+          </div>
         </div>
       </div>
     `;
@@ -1005,9 +1132,7 @@ const ui = {
     const my = idea.ratings?.[state.user] || 0;
     const otherUser = state.user==='person1'?'person2':'person1';
     const their = idea.ratings?.[otherUser] || 0;
-
-    // Show "NEW" badge if idea was created by other partner and current user hasn't rated it yet
-    const isNewForMe = idea.createdBy && idea.createdBy === otherUser && my === 0;
+    const isUnrated = my === 0;
 
     // Show partner's rating only if THEY rated it 3 or higher
     const showPartnerRating = their >= 3;
@@ -1015,39 +1140,32 @@ const ui = {
       ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
       : `${users[otherUser]}: Hidden`;
 
-    // Reactions
-    const reactions = idea.reactions || {};
-    const reactionsHtml = Object.keys(reactions).length > 0 || true ? `
-      <div class="reactions">
-        ${Object.entries(reactions).map(([emoji, users]) => {
-          const hasReacted = users.includes(state.user);
-          return `<div class="reaction ${hasReacted?'active':''}" onclick="event.stopPropagation(); toggleReaction('${idea.id}', '${emoji}')">
-            <span>${emoji}</span>
-            <span class="reaction-count">${users.length}</span>
-          </div>`;
-        }).join('')}
-        <div class="add-reaction" onclick="event.stopPropagation(); addReaction('${idea.id}')" title="Add reaction">+</div>
-      </div>
-    ` : '';
-
-    // Notes preview
-    const notesPreview = idea.notes ? `
-      <div style="padding:10px 14px; border-top:1px dashed var(--border); font-size:13px; color:var(--subtle); line-height:1.4">
-        📝 ${esc(idea.notes.slice(0, 80))}${idea.notes.length > 80 ? '...' : ''}
-      </div>
-    ` : '';
-
     const media = thumb ? `
       <div class="media">
         <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
         ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
-        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
         <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
       </div>` : `
       <div class="media">
-        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
         <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
       </div>`;
+
+    // Buttons for declined view
+    const actionButtons = state.view === 'declined' ? `
+      <div class="row-actions">
+        <button class="btn primary" onclick="event.stopPropagation(); formHandlers.restore('${idea.id}')">Restore to All Ideas</button>
+        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
+      </div>
+    ` : `
+      <div class="row-actions">
+        <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
+        <div class="grow"></div>
+        ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
+      </div>
+    `;
 
     return `
       <article class="card" onclick="ui.openDetail('${idea.id}')">
@@ -1055,20 +1173,13 @@ const ui = {
         <div class="card-body">
           <p class="desc">${esc(idea.description)}</p>
         </div>
-        ${notesPreview}
         <div class="ratings">
           <div class="stars" onclick="event.stopPropagation();">
             ${stars.inline(my, n=>rate(idea.id, state.user, n))}
           </div>
           <div class="peer">${partnerRatingDisplay}</div>
         </div>
-        ${reactionsHtml}
-        <div class="row-actions">
-          <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-          <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
-          <div class="grow"></div>
-          ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
-        </div>
+        ${actionButtons}
       </article>
     `;
   },
@@ -1099,6 +1210,29 @@ const stars = {
       html += `<span class="s ${i<=value?'f':''}" onclick="(${onSet})( ${i} )">★</span>`;
     }
     return html;
+  }
+};
+
+/* ---------- Comments ---------- */
+const comments = {
+  async add(ideaId) {
+    const input = document.getElementById(`commentInput_${ideaId}`);
+    const text = input?.value.trim();
+    if (!text) return;
+
+    const idea = state.ideas.find(i => i.id === ideaId);
+    if (!idea) return;
+
+    const newComment = {
+      user: state.user,
+      text: text,
+      timestamp: Date.now()
+    };
+
+    const updatedComments = [...(idea.comments || []), newComment];
+    await api.updateIdea(ideaId, { comments: updatedComments });
+    await loadIdeas();
+    ui.renderSwipe();
   }
 };
 
@@ -1153,7 +1287,7 @@ const formHandlers = {
         completed: false,
         ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
         createdBy: state.user,
-        reactions: {}
+        comments: []
       });
     }
 
@@ -1173,9 +1307,31 @@ const formHandlers = {
     
     await api.deleteIdea(id);
     await loadIdeas();
-    
+
     try{ document.getElementById('sheet').close(); }catch(_){}
-    ui.render();
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
+  },
+  async restore(ideaId) {
+    // Restore a declined idea by setting rating to 0
+    const idea = state.ideas.find(i => i.id === ideaId);
+    if (!idea) return;
+
+    await api.updateIdea(ideaId, {
+      ratings: { ...idea.ratings, [state.user]: 0 }
+    });
+
+    await loadIdeas();
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   }
 };
 
@@ -1194,48 +1350,6 @@ async function rate(id, who, n){
   }
 
   ui.render();
-}
-
-/* ---------- Reactions ---------- */
-async function toggleReaction(ideaId, emoji) {
-  const idea = state.ideas.find(i => i.id === ideaId);
-  if (!idea) return;
-
-  const reactions = idea.reactions || {};
-  const userList = reactions[emoji] || [];
-
-  if (userList.includes(state.user)) {
-    // Remove reaction
-    reactions[emoji] = userList.filter(u => u !== state.user);
-    if (reactions[emoji].length === 0) {
-      delete reactions[emoji];
-    }
-  } else {
-    // Add reaction
-    reactions[emoji] = [...userList, state.user];
-  }
-
-  await api.updateIdea(ideaId, { reactions });
-  await loadIdeas();
-  ui.render();
-}
-
-async function addReaction(ideaId) {
-  const emoji = prompt('Enter an emoji reaction (or pick from: ❤️ 🔥 😍 👍 🎉 💯)');
-  if (!emoji || !emoji.trim()) return;
-
-  const idea = state.ideas.find(i => i.id === ideaId);
-  if (!idea) return;
-
-  const reactions = idea.reactions || {};
-  const userList = reactions[emoji] || [];
-
-  if (!userList.includes(state.user)) {
-    reactions[emoji] = [...userList, state.user];
-    await api.updateIdea(ideaId, { reactions });
-    await loadIdeas();
-    ui.render();
-  }
 }
 
 /* ---------- Import / Export ---------- */

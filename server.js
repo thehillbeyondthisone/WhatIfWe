@@ -27,7 +27,10 @@ async function initDataFile() {
         ratings: { person1: 4, person2: 5 },
         notes: '',
         completed: false,
-        reactions: {},
+        comments: [
+          { user: 'person1', text: 'This looks fun!', timestamp: Date.now() - 1000 * 60 * 60 * 2 },
+          { user: 'person2', text: 'I agree! Let\'s do it this weekend!', timestamp: Date.now() - 1000 * 60 * 60 }
+        ],
         createdBy: null
       },
       {
@@ -39,7 +42,7 @@ async function initDataFile() {
         ratings: { person1: 5, person2: 4 },
         notes: '',
         completed: false,
-        reactions: {},
+        comments: [],
         createdBy: null
       },
       {
@@ -51,7 +54,7 @@ async function initDataFile() {
         ratings: { person1: 2, person2: 5 },
         notes: '',
         completed: false,
-        reactions: {},
+        comments: [],
         createdBy: null
       },
       {
@@ -63,7 +66,7 @@ async function initDataFile() {
         ratings: { person1: 0, person2: 0 },
         notes: '',
         completed: false,
-        reactions: {},
+        comments: [],
         createdBy: null
       }
     ];
@@ -147,7 +150,7 @@ app.get('/api/ideas', async (req, res) => {
 // Add new idea
 app.post('/api/ideas', async (req, res) => {
   try {
-    const { description, videoUrl, imageUrl, ratings, createdBy, notes, completed, reactions } = req.body;
+    const { description, videoUrl, imageUrl, ratings, createdBy, notes, completed, comments } = req.body;
 
     if (!description) {
       return res.status(400).json({ error: 'Description required' });
@@ -164,7 +167,7 @@ app.post('/api/ideas', async (req, res) => {
       createdBy: createdBy || null,
       notes: notes || '',
       completed: completed || false,
-      reactions: reactions || {}
+      comments: comments || []
     };
 
     ideas.push(newIdea);
@@ -180,7 +183,7 @@ app.post('/api/ideas', async (req, res) => {
 app.patch('/api/ideas/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, videoUrl, imageUrl, ratings, notes, completed, reactions } = req.body;
+    const { description, videoUrl, imageUrl, ratings, notes, completed, comments } = req.body;
 
     let ideas = await readData();
     const ideaIndex = ideas.findIndex(i => i.id === id);
@@ -197,7 +200,7 @@ app.patch('/api/ideas/:id', async (req, res) => {
     if (ratings !== undefined) idea.ratings = ratings;
     if (notes !== undefined) idea.notes = notes;
     if (completed !== undefined) idea.completed = completed;
-    if (reactions !== undefined) idea.reactions = reactions;
+    if (comments !== undefined) idea.comments = comments;
 
     ideas[ideaIndex] = idea;
     await writeData(ideas);
