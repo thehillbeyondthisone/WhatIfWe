@@ -24,105 +24,95 @@
     --radius: 12px;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%; margin:0; padding:0; overflow-x:hidden}
   body{
-    margin:0;
     background:linear-gradient(180deg,#0b1020 0%, var(--bg) 60%);
     color:var(--text);
-    font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    font:16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   }
+
+  /* Login screen */
+  .login-screen{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding:20px; text-align:center;
+  }
+  .login-screen h1{font-size:32px; margin:0 0 10px; letter-spacing:.3px}
+  .login-screen p{color:var(--subtle); margin:0 0 40px; font-size:16px}
+  .login-buttons{display:flex; flex-direction:column; gap:16px; width:100%; max-width:300px}
+  .login-btn{
+    padding:18px 24px; border:2px solid var(--brand); border-radius:12px;
+    background:linear-gradient(180deg, rgba(125,211,252,.1), rgba(125,211,252,.05));
+    color:var(--brand); font-size:18px; font-weight:700; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .login-btn:active{transform:scale(0.98); background:var(--brand); color:#0b1020}
+
   .app{
-    max-width:1200px;
-    margin:0 auto;
-    padding:24px 20px 56px;
+    max-width:100%; margin:0; padding:0 0 80px;
   }
+
+  /* Header - fixed at top */
   header{
-    display:flex; gap:16px; align-items:center; justify-content:space-between;
-    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:14px 16px;
-    box-shadow:var(--shadow);
-    position:sticky; top:16px; z-index:5;
-    backdrop-filter:saturate(120%) blur(4px);
+    display:flex; gap:12px; flex-direction:column; padding:16px;
+    background:var(--panel); border-bottom:1px solid var(--border);
+    position:fixed; top:0; left:0; right:0; z-index:100;
   }
-  .title{
-    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  .title{display:flex; align-items:center; justify-content:space-between; width:100%}
+  .title h1{margin:0; font-size:20px; letter-spacing:.3px; font-weight:700}
+  .subtitle{color:var(--subtle); font-size:12px; margin-left:auto}
+  .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  .btn, .select, .field{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    border-radius:8px; padding:10px 14px; outline:none; font-size:14px;
   }
-  .title h1{
-    margin:0; font-size:20px; letter-spacing:.3px; font-weight:700;
-  }
-  .subtitle{color:var(--subtle); font-size:12px}
-  .controls{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  .field{flex:1; min-width:0}
+  .select{appearance:none; padding-right:30px}
+  .btn{cursor:pointer; font-weight:600; white-space:nowrap}
+  .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#03121d; border:0}
+  .btn.ghost{background:transparent}
+  .btn.danger{background:var(--danger); border-color:transparent; color:white}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
+
+  /* Toolbar */
+  .toolbar{
+    padding:12px 16px; background:var(--muted); border-bottom:1px solid var(--border);
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    margin-top:140px; /* Space for fixed header */
   }
   .seg{
     display:flex; background:var(--panel); border:1px solid var(--border);
-    border-radius:999px; overflow:hidden;
+    border-radius:8px; overflow:hidden;
   }
   .seg button{
     border:0; background:transparent; color:var(--subtle);
-    padding:8px 12px; cursor:pointer; font-weight:600;
+    padding:8px 14px; cursor:pointer; font-weight:600; font-size:14px;
   }
-  .seg button.active{background:var(--muted); color:var(--text)}
-  .field, .select, .btn{
-    border:1px solid var(--border); background:var(--panel); color:var(--text);
-    border-radius:999px; padding:8px 12px; outline:none;
-  }
-  .field{min-width:200px}
-  .select{appearance:none}
-  .btn{cursor:pointer; font-weight:700}
-  .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#03121d; border:0}
-  .btn.ghost{background:transparent}
-  .btn.danger{background:var(--danger); border-color:transparent}
-  .btn:disabled{opacity:.6; cursor:not-allowed}
+  .seg button.active{background:var(--brand); color:#0b1020}
 
-  /* layout */
-  .row{display:flex; gap:16px; margin-top:16px; align-items:center; flex-wrap:wrap}
-  .toolbar{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:12px;
-    box-shadow:var(--shadow);
-  }
-  .chip{
-    display:inline-flex; align-items:center; gap:6px;
-    background:var(--chip-bg); color:var(--chip-txt);
-    border:1px solid #1f3550; border-radius:999px; padding:6px 10px; font-weight:600;
-  }
-  .chip .x{opacity:.8; cursor:pointer}
-  .chips{display:flex; gap:8px; flex-wrap:wrap}
-
-  /* grid */
+  /* Grid */
   .grid{
-    margin-top:14px;
-    display:grid; gap:14px;
-    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    padding:16px; display:flex; flex-direction:column; gap:16px;
   }
   .card{
     border:1px solid var(--border);
     background:linear-gradient(180deg, #0c162a, #0b1424);
-    border-radius:14px; overflow:hidden; box-shadow:var(--shadow);
-    display:flex; flex-direction:column; min-height:120px;
+    border-radius:12px; overflow:hidden; box-shadow:var(--shadow);
   }
   .media{
     position:relative; background:#081223; border-bottom:1px solid var(--border);
-    height:150px; display:flex; align-items:center; justify-content:center;
+    min-height:200px; display:flex; align-items:center; justify-content:center;
   }
-  .media img{
-    width:100%; height:100%; object-fit:cover; display:block;
-  }
+  .media img{width:100%; height:100%; object-fit:cover; display:block}
   .media .badge{
     position:absolute; top:8px; left:8px; font-size:11px; font-weight:700;
-    background:rgba(2,6,23,.8); border:1px solid var(--border);
-    color:var(--brand); padding:4px 8px; border-radius:999px;
+    background:rgba(2,6,23,.9); border:1px solid var(--border);
+    color:var(--brand); padding:4px 8px; border-radius:6px;
   }
   .media .new-badge{
     position:absolute; top:8px; right:8px; font-size:11px; font-weight:700;
     background:var(--accent); border:1px solid #d97706;
-    color:#0f172a; padding:4px 8px; border-radius:999px;
+    color:#0f172a; padding:4px 8px; border-radius:6px;
     animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse {
@@ -130,173 +120,129 @@
     50% { opacity: 0.7; }
   }
   .media .edit{
-    position:absolute; top:8px; right:8px;
-    background:rgba(2,6,23,.8); border:1px solid var(--border);
-    color:var(--text); padding:6px 10px; border-radius:999px; cursor:pointer;
+    position:absolute; bottom:8px; right:8px;
+    background:rgba(2,6,23,.9); border:1px solid var(--border);
+    color:var(--text); padding:8px 12px; border-radius:6px; cursor:pointer;
+    font-size:12px; font-weight:600;
   }
-  .card-body{padding:12px}
+  .card-body{padding:14px}
   .desc{
-    font-size:14px; font-weight:700; margin:0 0 8px; color:#dbeafe;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
-  }
-  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px}
-  .tag{
-    font-size:11px; background:#0b213a; color:#bfe0ff;
-    border:1px solid #163450; border-radius:999px; padding:4px 8px; font-weight:700;
+    font-size:15px; font-weight:600; margin:0 0 12px; color:#dbeafe; line-height:1.4;
   }
   .ratings{
     display:flex; justify-content:space-between; align-items:center; gap:8px;
-    border-top:1px dashed var(--border); padding:10px 12px; margin-top:auto;
+    border-top:1px dashed var(--border); padding:12px 14px; margin-top:auto;
   }
-  .stars{display:flex; gap:2px; cursor:pointer}
-  .stars .s{font-size:16px; color:#334155}
+  .stars{display:flex; gap:4px; cursor:pointer}
+  .stars .s{font-size:20px; color:#334155}
   .stars .s.f{color:#fbbf24}
-  .peer{font-size:12px; color:var(--subtle)}
-  .row-actions{
-    display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border);
-  }
-  .row-actions .btn{border-radius:8px}
+  .peer{font-size:13px; color:var(--subtle); font-weight:600}
 
-  .empty{
-    border:1px dashed var(--border); border-radius:var(--radius);
-    padding:36px; text-align:center; color:var(--subtle); margin-top:14px;
-  }
-
-  /* modal (simple sheet) */
-  dialog{
-    border:none; border-radius:16px; padding:0; width:min(720px, calc(100% - 24px));
-    background:linear-gradient(180deg, #0c162a, #0b1424);
-    color:var(--text); box-shadow:0 30px 80px rgba(0,0,0,.6); border:1px solid var(--border);
-  }
-  .sheet{
-    display:flex; flex-direction:column; gap:0;
-  }
-  .sheet header{
-    position:sticky; inset:0; box-shadow:none; border-radius:16px 16px 0 0;
-    top:0; margin:0; padding:14px 16px; background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.25));
-  }
-  .sheet .content{padding:16px}
-  .f{display:flex; flex-direction:column; gap:10px}
-  .f .g{display:grid; gap:10px; grid-template-columns:1fr 1fr}
-  .f label{font-size:12px; color:var(--subtle)}
-  .f input[type="text"], .f input[type="url"], .f textarea{
-    border:1px solid var(--border); background:#0a1427; color:var(--text);
-    border-radius:10px; padding:10px 12px; outline:none;
-  }
-  textarea{min-height:90px; resize:vertical}
-  .sheet .footer{
-    display:flex; gap:10px; justify-content:flex-end; padding:12px 16px;
-    border-top:1px solid var(--border); background:rgba(0,0,0,.25); border-radius:0 0 16px 16px;
-  }
-
-  /* utility */
-  .hidden{display:none !important}
-  .grow{flex:1}
-
-  /* reactions */
+  /* Reactions */
   .reactions{
-    display:flex; gap:6px; padding:8px 12px; border-top:1px dashed var(--border);
+    display:flex; gap:8px; padding:10px 14px; border-top:1px dashed var(--border);
     flex-wrap:wrap; align-items:center;
   }
   .reaction{
     display:flex; align-items:center; gap:4px;
     background:var(--chip-bg); border:1px solid #1f3550;
-    border-radius:999px; padding:4px 8px; cursor:pointer;
-    font-size:14px; transition:all 0.2s;
+    border-radius:20px; padding:6px 10px; cursor:pointer;
+    font-size:16px; transition:all 0.2s;
   }
-  .reaction:hover{background:#1a2f4a; transform:scale(1.05)}
+  .reaction:active{background:#1a2f4a; transform:scale(0.95)}
   .reaction.active{background:#1f4788; border-color:var(--brand)}
-  .reaction-count{font-size:11px; color:var(--subtle); font-weight:700}
+  .reaction-count{font-size:12px; color:var(--subtle); font-weight:700}
   .add-reaction{
     background:transparent; border:1px dashed var(--border);
-    color:var(--subtle); font-size:18px; width:32px; height:32px;
+    color:var(--subtle); font-size:20px; width:36px; height:36px;
     display:flex; align-items:center; justify-content:center;
     border-radius:50%; cursor:pointer; transition:all 0.2s;
   }
-  .add-reaction:hover{border-color:var(--brand); color:var(--brand); transform:rotate(90deg)}
+  .add-reaction:active{border-color:var(--brand); color:var(--brand); transform:scale(0.95)}
 
-  /* notifications */
+  /* Row actions */
+  .row-actions{
+    display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .row-actions .btn{border-radius:6px; flex:1; min-width:0; padding:10px}
+
+  .empty{
+    padding:40px 20px; text-align:center; color:var(--subtle);
+  }
+
+  /* Modal/Dialog */
+  dialog{
+    border:none; border-radius:0; padding:0; width:100%; max-width:100%; height:100vh; max-height:100vh;
+    background:var(--bg); color:var(--text); margin:0; position:fixed; inset:0;
+  }
+  dialog::backdrop{background:rgba(0,0,0,.8)}
+  .sheet{display:flex; flex-direction:column; height:100%; overflow:hidden}
+  .sheet header{
+    padding:16px; background:var(--panel); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:12px;
+  }
+  .sheet header strong{flex:1; font-size:18px}
+  .sheet .content{padding:20px; overflow-y:auto; flex:1}
+  .f{display:flex; flex-direction:column; gap:16px}
+  .f label{font-size:13px; color:var(--subtle); font-weight:600; margin-bottom:6px; display:block}
+  .f input[type="text"], .f input[type="url"], .f textarea{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    border-radius:8px; padding:12px; outline:none; font-size:16px; width:100%;
+  }
+  .f textarea{min-height:100px; resize:vertical; font-family:inherit}
+  .f input[type="checkbox"]{width:20px; height:20px; cursor:pointer}
+  .sheet .footer{
+    display:flex; gap:10px; padding:16px;
+    border-top:1px solid var(--border); background:var(--panel);
+  }
+
+  /* Notifications */
   .notification{
-    position:fixed; top:80px; right:20px; z-index:1000;
+    position:fixed; top:160px; left:16px; right:16px; z-index:1000;
     background:linear-gradient(180deg, #1a2c4a, #0f1d35);
     border:1px solid var(--brand); border-radius:12px;
-    padding:14px 18px; box-shadow:0 8px 32px rgba(0,0,0,.6);
-    max-width:350px; animation:slideIn 0.3s ease-out;
+    padding:16px; box-shadow:0 8px 32px rgba(0,0,0,.8);
+    animation:slideDown 0.3s ease-out;
   }
-  @keyframes slideIn {
-    from { transform:translateX(400px); opacity:0; }
-    to { transform:translateX(0); opacity:1; }
+  @keyframes slideDown {
+    from { transform:translateY(-100px); opacity:0; }
+    to { transform:translateY(0); opacity:1; }
   }
-  .notification.exit{animation:slideOut 0.3s ease-in forwards}
-  @keyframes slideOut {
-    from { transform:translateX(0); opacity:1; }
-    to { transform:translateX(400px); opacity:0; }
+  .notification.exit{animation:slideUp 0.3s ease-in forwards}
+  @keyframes slideUp {
+    from { transform:translateY(0); opacity:1; }
+    to { transform:translateY(-100px); opacity:0; }
   }
-  .notification-title{font-weight:700; color:var(--brand); margin-bottom:4px}
-  .notification-body{font-size:13px; color:var(--text)}
-  
-  /* Mobile mode - optimized for newest iPhones */
-  body.mobile-mode {
-    font-size: 16px; /* Prevent zoom on input focus */
-  }
-  body.mobile-mode .app {
-    padding: 16px 12px 40px;
-    max-width: 100%;
-  }
-  body.mobile-mode header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    border-radius: 0;
-    z-index: 100;
-  }
-  body.mobile-mode .toolbar {
-    margin-top: 80px;
-  }
-  body.mobile-mode .grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  body.mobile-mode .card {
-    border-radius: 12px;
-  }
-  body.mobile-mode .field {
-    font-size: 16px;
-  }
-  body.mobile-mode .btn {
-    padding: 10px 14px;
-    font-size: 14px;
-  }
-  body.mobile-mode dialog {
-    width: calc(100% - 16px);
-    max-height: 90vh;
-  }
+  .notification-title{font-weight:700; color:var(--brand); margin-bottom:6px; font-size:15px}
+  .notification-body{font-size:14px; color:var(--text)}
 
-  @media (max-width: 768px) {
-    header{flex-direction:column; align-items:stretch}
-    .controls{flex-direction:column}
-    .field{min-width:100%}
-    .f .g{grid-template-columns:1fr}
-  }
+  /* Utility */
+  .hidden{display:none !important}
+  .grow{flex:1}
 </style>
 </head>
 <body>
-<div class="app">
-  <header aria-label="Top bar">
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen hidden">
+  <h1>What if we…</h1>
+  <p>Choose your profile to continue</p>
+  <div class="login-buttons">
+    <button class="login-btn" onclick="auth.login('person1')">Partner 1</button>
+    <button class="login-btn" onclick="auth.login('person2')">Partner 2</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" class="app hidden">
+  <header>
     <div class="title">
       <h1>What if we…</h1>
-      <span class="subtitle">Plan, rate, and pick ideas together.</span>
+      <button class="btn ghost" onclick="auth.logout()">Switch User</button>
     </div>
     <div class="controls">
-      <div class="seg" role="tablist" aria-label="Active person">
-        <button class="active" id="u1" onclick="ui.setUser('person1')" role="tab" aria-selected="true">Partner 1</button>
-        <button id="u2" onclick="ui.setUser('person2')" role="tab" aria-selected="false">Partner 2</button>
-      </div>
-      <button class="btn ghost" id="mobileToggle" onclick="ui.toggleMobileMode()" title="Toggle mobile mode">📱</button>
-      <input class="field" id="q" placeholder="Search description or tags…" oninput="ui.render()" aria-label="Search">
-      <select class="select" id="sort" onchange="ui.render()" aria-label="Sort">
+      <input class="field" id="q" placeholder="Search…" oninput="ui.render()">
+      <select class="select" id="sort" onchange="ui.render()">
         <option value="date_desc">Newest</option>
         <option value="date_asc">Oldest</option>
         <option value="my_rating_desc">My rating ↓</option>
@@ -304,92 +250,67 @@
         <option value="avg_desc">Avg rating ↓</option>
         <option value="avg_asc">Avg rating ↑</option>
       </select>
-      <button class="btn ghost" onclick="io.importJson()">Import</button>
-      <button class="btn ghost" onclick="io.exportJson()">Export</button>
-      <button class="btn primary" onclick="ui.openForm()">Add idea</button>
+      <button class="btn primary" onclick="ui.openForm()">+ Add</button>
     </div>
   </header>
 
   <div class="toolbar">
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <div class="seg" role="tablist" aria-label="View filter">
-        <button class="active" id="viewAll" onclick="ui.setView('all')" role="tab">All Ideas</button>
-        <button id="viewWould" onclick="ui.setView('would')" role="tab">Would ✅</button>
-      </div>
+    <div class="seg">
+      <button class="active" id="viewAll" onclick="ui.setView('all')">All Ideas</button>
+      <button id="viewWould" onclick="ui.setView('would')">Would ✅</button>
     </div>
-    <div class="chips" id="activeTags"></div>
-    <div class="grow"></div>
-    <button class="btn ghost" onclick="filters.clear()">Clear filters</button>
   </div>
 
   <div class="grid" id="grid"></div>
   <div class="empty hidden" id="emptyState">
-    No ideas match your filters yet. Add one or adjust search/sort.
+    No ideas yet. Tap "+ Add" to create one!
   </div>
 </div>
 
-<!-- Notifications container -->
+<!-- Notifications -->
 <div id="notifications"></div>
 
-<!-- Add/Edit sheet -->
+<!-- Edit Dialog -->
 <dialog id="sheet">
   <div class="sheet">
     <header>
-      <div style="display:flex; align-items:center; gap:10px; width:100%">
-        <strong id="sheetTitle">Add idea</strong>
-        <div class="grow"></div>
-        <button class="btn ghost" onclick="ui.closeForm()">Close</button>
-      </div>
+      <strong id="sheetTitle">Add idea</strong>
+      <button class="btn ghost" onclick="ui.closeForm()">✕</button>
     </header>
     <div class="content">
       <form class="f" id="form" onsubmit="formHandlers.save(event)">
         <input type="hidden" id="id">
-        <div class="g">
-          <div>
-            <label for="desc">What's the idea? <span style="color:var(--accent)">*</span></label>
-            <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
-          </div>
-          <div>
-            <label for="tags">Tags (comma separated)</label>
-            <input type="text" id="tags" placeholder="outdoors, food, quick, rainy-day">
-          </div>
+        <div>
+          <label for="desc">What's the idea?</label>
+          <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
         </div>
-        <div class="g">
-          <div>
-            <label for="video">Video URL (YouTube supported)</label>
-            <input type="url" id="video" placeholder="https://youtu.be/… or https://youtube.com/watch?v=…">
-          </div>
-          <div>
-            <label for="image">Image URL (optional)</label>
-            <input type="url" id="image" placeholder="https://…/photo.jpg or png/webp">
-          </div>
+        <div>
+          <label for="video">Video URL (optional)</label>
+          <input type="url" id="video" placeholder="https://youtu.be/…">
+        </div>
+        <div>
+          <label for="image">Image URL (optional)</label>
+          <input type="url" id="image" placeholder="https://…/photo.jpg">
         </div>
         <div>
           <label>Your rating</label>
-          <div class="stars" id="myStars" aria-label="Your rating"></div>
+          <div class="stars" id="myStars"></div>
         </div>
         <div>
-          <label for="notes">Notes (visible to both partners)</label>
-          <textarea id="notes" placeholder="Add planning details, location info, cost estimates, etc."></textarea>
+          <label for="notes">Notes (visible to both)</label>
+          <textarea id="notes" placeholder="Planning details, location, cost, etc."></textarea>
         </div>
         <div>
-          <label>Status</label>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-              <input type="checkbox" id="completed" style="width: 18px; height: 18px; cursor: pointer;">
-              <span>✅ We did this! (Move to "Would" folder)</span>
-            </label>
-          </div>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer">
+            <input type="checkbox" id="completed">
+            <span>✅ We did this!</span>
+          </label>
         </div>
       </form>
-      <div style="margin-top:8px; font-size:12px; color:var(--subtle)">
-        Thumbnails: If you enter a YouTube link, the thumbnail is fetched automatically. If you provide an image URL, that's used. Otherwise the tile becomes text-only.
-      </div>
     </div>
     <div class="footer">
       <button class="btn danger hidden" id="delBtn" onclick="formHandlers.del()">Delete</button>
       <div class="grow"></div>
-      <button class="btn" onclick="ui.closeForm()">Cancel</button>
       <button class="btn primary" form="form">Save</button>
     </div>
   </div>
@@ -441,14 +362,37 @@ const api = {
 };
 
 const state = {
-  user:'person1',
+  user: null,
   ideas: [],
   query:'',
   sort:'date_desc',
-  tagFilters:new Set(),
-  mobileMode: false,
-  view: 'all', // 'all' or 'would'
+  view: 'all',
   lastSeenIdeas: JSON.parse(localStorage.getItem('lastSeenIdeas') || '[]'),
+};
+
+/* ---------- Authentication ---------- */
+const auth = {
+  login(user) {
+    state.user = user;
+    localStorage.setItem('loggedInUser', user);
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    loadIdeas().then(() => ui.render());
+  },
+  logout() {
+    state.user = null;
+    localStorage.removeItem('loggedInUser');
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  },
+  checkLogin() {
+    const savedUser = localStorage.getItem('loggedInUser');
+    if (savedUser) {
+      this.login(savedUser);
+    } else {
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+  }
 };
 
 /* ---------- Utilities ---------- */
@@ -515,19 +459,12 @@ function getThumb(idea){
   return '';
 }
 function esc(s){ const d=document.createElement('div'); d.textContent=String(s??''); return d.innerHTML; }
-function toTags(s){
-  return (s||'')
-    .split(',')
-    .map(t=>t.trim())
-    .filter(Boolean)
-    .slice(0,20);
-}
 
 /* ---------- Filters & sorting ---------- */
 const filters = {
   clear(){
     state.query=''; document.getElementById('q').value='';
-    state.tagFilters.clear(); ui.render();
+    ui.render();
   },
   apply(arr){
     let out = arr;
@@ -542,13 +479,11 @@ const filters = {
     const q = state.query.trim().toLowerCase();
     if (q){
       out = out.filter(i=>{
-        const hay = (i.description+' '+(i.tags||[]).join(' ')+' '+(i.notes||'')).toLowerCase();
+        const hay = (i.description+' '+(i.notes||'')).toLowerCase();
         return hay.includes(q);
       });
     }
-    if (state.tagFilters.size){
-      out = out.filter(i => (i.tags||[]).some(t => state.tagFilters.has(t)));
-    }
+
     const sort = state.sort;
     out = out.slice().sort((a,b)=>{
       switch(sort){
@@ -567,20 +502,6 @@ const filters = {
 
 /* ---------- UI ---------- */
 const ui = {
-  toggleMobileMode(){
-    state.mobileMode = !state.mobileMode;
-    document.body.classList.toggle('mobile-mode', state.mobileMode);
-    localStorage.setItem('mobileMode', state.mobileMode);
-    const btn = document.getElementById('mobileToggle');
-    btn.style.background = state.mobileMode ? 'var(--brand)' : 'transparent';
-    btn.style.color = state.mobileMode ? '#03121d' : 'var(--text)';
-  },
-  setUser(u){
-    state.user=u;
-    document.getElementById('u1').classList.toggle('active', u==='person1');
-    document.getElementById('u2').classList.toggle('active', u==='person2');
-    ui.render();
-  },
   setView(v){
     state.view = v;
     document.getElementById('viewAll').classList.toggle('active', v==='all');
@@ -598,7 +519,6 @@ const ui = {
     document.getElementById('desc').value = idea?.description || '';
     document.getElementById('video').value = idea?.videoUrl || '';
     document.getElementById('image').value = idea?.imageUrl || '';
-    document.getElementById('tags').value = (idea?.tags||[]).join(', ');
     document.getElementById('notes').value = idea?.notes || '';
     document.getElementById('completed').checked = idea?.completed || false;
 
@@ -608,32 +528,17 @@ const ui = {
     d.showModal();
   },
   closeForm(){ document.getElementById('sheet').close(); },
-  addTagFilter(tag){
-    state.tagFilters.add(tag);
-    this.render();
-  },
-  removeTagFilter(tag){
-    state.tagFilters.delete(tag);
-    this.render();
-  },
   render(){
     state.query = document.getElementById('q').value || '';
     state.sort  = document.getElementById('sort').value;
 
-    // Active tags at top
-    const tbar = document.getElementById('activeTags');
-    tbar.innerHTML = [...state.tagFilters].map(t =>
-      `<span class="chip">${esc(t)} <span class="x" onclick="ui.removeTagFilter('${esc(t)}')">×</span></span>`
-    ).join('');
-
-    // Grid
     const grid = document.getElementById('grid');
     const list = filters.apply(state.ideas);
     document.getElementById('emptyState').classList.toggle('hidden', list.length>0);
 
     grid.innerHTML = list.map(idea => ui.card(idea)).join('');
 
-    // wire up image error fallback to text-only
+    // Wire up image error fallback
     grid.querySelectorAll('img[data-id]').forEach(img=>{
       img.onerror = () => {
         const card = img.closest('.card');
@@ -645,7 +550,6 @@ const ui = {
   },
   card(idea){
     const thumb = getThumb(idea);
-    const tags = (idea.tags||[]).slice(0,6);
     const my = idea.ratings?.[state.user] || 0;
     const otherUser = state.user==='person1'?'person2':'person1';
     const their = idea.ratings?.[otherUser] || 0;
@@ -661,7 +565,6 @@ const ui = {
 
     // Reactions
     const reactions = idea.reactions || {};
-    const emojiOptions = ['❤️', '🔥', '😍', '👍', '🎉', '💯'];
     const reactionsHtml = Object.keys(reactions).length > 0 || true ? `
       <div class="reactions">
         ${Object.entries(reactions).map(([emoji, users]) => {
@@ -677,8 +580,8 @@ const ui = {
 
     // Notes preview
     const notesPreview = idea.notes ? `
-      <div style="padding:10px 12px; border-top:1px dashed var(--border); font-size:12px; color:var(--subtle);">
-        📝 ${esc(idea.notes.slice(0, 100))}${idea.notes.length > 100 ? '...' : ''}
+      <div style="padding:10px 14px; border-top:1px dashed var(--border); font-size:13px; color:var(--subtle); line-height:1.4">
+        📝 ${esc(idea.notes.slice(0, 80))}${idea.notes.length > 80 ? '...' : ''}
       </div>
     ` : '';
 
@@ -699,9 +602,6 @@ const ui = {
         ${media}
         <div class="card-body">
           <p class="desc">${esc(idea.description)}</p>
-          <div class="tags">
-            ${tags.map(t => `<span class="tag" onclick="event.stopPropagation(); ui.addTagFilter('${esc(t)}')">#${esc(t)}</span>`).join('')}
-          </div>
         </div>
         ${notesPreview}
         <div class="ratings">
@@ -715,7 +615,7 @@ const ui = {
           <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
           <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
           <div class="grow"></div>
-          ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Open video</a>` : ''}
+          ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
         </div>
       </article>
     `;
@@ -758,7 +658,6 @@ const formHandlers = {
     const desc  = document.getElementById('desc').value.trim();
     const video = document.getElementById('video').value.trim();
     const image = document.getElementById('image').value.trim();
-    const tags  = toTags(document.getElementById('tags').value);
     const notes = document.getElementById('notes').value.trim();
     const completed = document.getElementById('completed').checked;
 
@@ -774,7 +673,6 @@ const formHandlers = {
         description: desc,
         videoUrl: video,
         imageUrl: image,
-        tags,
         notes,
         completed,
         ratings: { ...idea.ratings, [state.user]: myR }
@@ -791,7 +689,6 @@ const formHandlers = {
         description: desc,
         videoUrl: video,
         imageUrl: image,
-        tags,
         notes,
         completed: false,
         ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
@@ -799,7 +696,7 @@ const formHandlers = {
         reactions: {}
       });
     }
-    
+
     await loadIdeas();
     ui.closeForm();
     ui.render();
@@ -937,18 +834,7 @@ document.getElementById('q').addEventListener('keydown', e=>{
 });
 
 (async function init(){
-  // Load mobile mode preference from localStorage
-  const savedMobileMode = localStorage.getItem('mobileMode') === 'true';
-  if (savedMobileMode) {
-    state.mobileMode = true;
-    document.body.classList.add('mobile-mode');
-    const btn = document.getElementById('mobileToggle');
-    btn.style.background = 'var(--brand)';
-    btn.style.color = '#03121d';
-  }
-
-  await loadIdeas();
-  ui.render();
+  auth.checkLogin();
 })();
 </script>
 </body>

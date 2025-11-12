@@ -24,7 +24,6 @@ async function initDataFile() {
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         imageUrl: '',
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 5,
-        tags: ['class', 'hands-on', 'creative'],
         ratings: { person1: 4, person2: 5 },
         notes: '',
         completed: false,
@@ -37,7 +36,6 @@ async function initDataFile() {
         videoUrl: '',
         imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?q=80&w=1200&auto=format&fit=crop',
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 4,
-        tags: ['food', 'night-out'],
         ratings: { person1: 5, person2: 4 },
         notes: '',
         completed: false,
@@ -50,7 +48,6 @@ async function initDataFile() {
         videoUrl: 'https://youtu.be/3GwjfUFyY6M',
         imageUrl: '',
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
-        tags: ['game', 'puzzle', 'indoor'],
         ratings: { person1: 2, person2: 5 },
         notes: '',
         completed: false,
@@ -63,7 +60,6 @@ async function initDataFile() {
         videoUrl: '',
         imageUrl: '',
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
-        tags: ['outdoors', 'day-trip', 'relaxed'],
         ratings: { person1: 0, person2: 0 },
         notes: '',
         completed: false,
@@ -151,7 +147,7 @@ app.get('/api/ideas', async (req, res) => {
 // Add new idea
 app.post('/api/ideas', async (req, res) => {
   try {
-    const { description, videoUrl, imageUrl, tags, ratings, createdBy, notes, completed, reactions } = req.body;
+    const { description, videoUrl, imageUrl, ratings, createdBy, notes, completed, reactions } = req.body;
 
     if (!description) {
       return res.status(400).json({ error: 'Description required' });
@@ -164,7 +160,6 @@ app.post('/api/ideas', async (req, res) => {
       videoUrl: videoUrl || '',
       imageUrl: imageUrl || '',
       createdAt: Date.now(),
-      tags: Array.isArray(tags) ? tags : [],
       ratings: ratings || { person1: 0, person2: 0 },
       createdBy: createdBy || null,
       notes: notes || '',
@@ -185,7 +180,7 @@ app.post('/api/ideas', async (req, res) => {
 app.patch('/api/ideas/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, videoUrl, imageUrl, tags, ratings, notes, completed, reactions } = req.body;
+    const { description, videoUrl, imageUrl, ratings, notes, completed, reactions } = req.body;
 
     let ideas = await readData();
     const ideaIndex = ideas.findIndex(i => i.id === id);
@@ -199,7 +194,6 @@ app.patch('/api/ideas/:id', async (req, res) => {
     if (description !== undefined) idea.description = description;
     if (videoUrl !== undefined) idea.videoUrl = videoUrl;
     if (imageUrl !== undefined) idea.imageUrl = imageUrl;
-    if (tags !== undefined) idea.tags = Array.isArray(tags) ? tags : [];
     if (ratings !== undefined) idea.ratings = ratings;
     if (notes !== undefined) idea.notes = notes;
     if (completed !== undefined) idea.completed = completed;
