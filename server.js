@@ -26,7 +26,10 @@ async function initDataFile() {
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 5,
         tags: ['class', 'hands-on', 'creative'],
         ratings: { person1: 4, person2: 5 },
-        notes: []
+        notes: '',
+        completed: false,
+        reactions: {},
+        createdBy: null
       },
       {
         id: '2',
@@ -36,7 +39,10 @@ async function initDataFile() {
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 4,
         tags: ['food', 'night-out'],
         ratings: { person1: 5, person2: 4 },
-        notes: []
+        notes: '',
+        completed: false,
+        reactions: {},
+        createdBy: null
       },
       {
         id: '3',
@@ -46,7 +52,10 @@ async function initDataFile() {
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
         tags: ['game', 'puzzle', 'indoor'],
         ratings: { person1: 2, person2: 5 },
-        notes: []
+        notes: '',
+        completed: false,
+        reactions: {},
+        createdBy: null
       },
       {
         id: '4',
@@ -56,7 +65,10 @@ async function initDataFile() {
         createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
         tags: ['outdoors', 'day-trip', 'relaxed'],
         ratings: { person1: 0, person2: 0 },
-        notes: []
+        notes: '',
+        completed: false,
+        reactions: {},
+        createdBy: null
       }
     ];
     await fs.writeFile(DATA_FILE, JSON.stringify(sample, null, 2));
@@ -139,7 +151,7 @@ app.get('/api/ideas', async (req, res) => {
 // Add new idea
 app.post('/api/ideas', async (req, res) => {
   try {
-    const { description, videoUrl, imageUrl, tags, ratings, createdBy } = req.body;
+    const { description, videoUrl, imageUrl, tags, ratings, createdBy, notes, completed, reactions } = req.body;
 
     if (!description) {
       return res.status(400).json({ error: 'Description required' });
@@ -155,7 +167,9 @@ app.post('/api/ideas', async (req, res) => {
       tags: Array.isArray(tags) ? tags : [],
       ratings: ratings || { person1: 0, person2: 0 },
       createdBy: createdBy || null,
-      notes: []
+      notes: notes || '',
+      completed: completed || false,
+      reactions: reactions || {}
     };
 
     ideas.push(newIdea);
@@ -171,26 +185,29 @@ app.post('/api/ideas', async (req, res) => {
 app.patch('/api/ideas/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, videoUrl, imageUrl, tags, ratings } = req.body;
-    
+    const { description, videoUrl, imageUrl, tags, ratings, notes, completed, reactions } = req.body;
+
     let ideas = await readData();
     const ideaIndex = ideas.findIndex(i => i.id === id);
-    
+
     if (ideaIndex === -1) {
       return res.status(404).json({ error: 'Idea not found' });
     }
-    
+
     const idea = ideas[ideaIndex];
-    
+
     if (description !== undefined) idea.description = description;
     if (videoUrl !== undefined) idea.videoUrl = videoUrl;
     if (imageUrl !== undefined) idea.imageUrl = imageUrl;
     if (tags !== undefined) idea.tags = Array.isArray(tags) ? tags : [];
     if (ratings !== undefined) idea.ratings = ratings;
-    
+    if (notes !== undefined) idea.notes = notes;
+    if (completed !== undefined) idea.completed = completed;
+    if (reactions !== undefined) idea.reactions = reactions;
+
     ideas[ideaIndex] = idea;
     await writeData(ideas);
-    
+
     res.json(idea);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update idea' });
@@ -258,25 +275,51 @@ app.post('/api/ideas/bulk', async (req, res) => {
   }
 });
 
-// Get local IP address
+// Get local IP address - prioritize common home network ranges
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
+  const addresses = [];
+
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       // Skip internal (loopback) and non-IPv4 addresses
       if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
+        addresses.push({ address: iface.address, name });
       }
     }
   }
-  return 'localhost';
+
+  // Priority order for home networks
+  const priorities = [
+    /^192\.168\.1\./,    // Most common home router default
+    /^192\.168\.0\./,    // Second most common
+    /^192\.168\.\d+\./,  // Any other 192.168.x.x
+    /^10\.0\.0\./,       // Some routers use 10.x
+    /^10\.\d+\.\d+\./,   // Any other 10.x.x.x
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16-31.x.x (private range)
+  ];
+
+  // Try to find best match based on priority
+  for (const pattern of priorities) {
+    const match = addresses.find(a => pattern.test(a.address));
+    if (match) {
+      return { address: match.address, allAddresses: addresses };
+    }
+  }
+
+  // If no priority match, return first found
+  if (addresses.length > 0) {
+    return { address: addresses[0].address, allAddresses: addresses };
+  }
+
+  return { address: 'localhost', allAddresses: [] };
 }
 
 // Start server
 initDataFile().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
-    const localIP = getLocalIP();
-    const localUrl = `http://${localIP}:${PORT}`;
+    const ipInfo = getLocalIP();
+    const localUrl = `http://${ipInfo.address}:${PORT}`;
 
     console.log('\n' + '='.repeat(60));
     console.log('✨  What if we… is running!');
@@ -284,15 +327,25 @@ initDataFile().then(() => {
     console.log(`\n📱 On this computer: http://localhost:${PORT}`);
     console.log(`🌐 On same network:  ${localUrl}\n`);
 
+    // Show all detected IPs if multiple found
+    if (ipInfo.allAddresses.length > 1) {
+      console.log('📍 All detected network addresses:');
+      ipInfo.allAddresses.forEach(addr => {
+        const marker = addr.address === ipInfo.address ? '→ ' : '  ';
+        console.log(`${marker}http://${addr.address}:${PORT} (${addr.name})`);
+      });
+      console.log('   → = recommended address for your LAN\n');
+    }
+
     console.log('📱 Scan with your phone:\n');
     qrcode.generate(localUrl, { small: true });
 
     console.log('\n' + '='.repeat(60));
     console.log('🚨 TROUBLESHOOTING: Can\'t access from other devices?');
     console.log('='.repeat(60));
-    console.log('\n1. Verify your computer\'s actual IP address:');
-    console.log('   • The detected IP above might be wrong');
-    console.log('   • Find your real IP and use: http://YOUR_REAL_IP:3000');
+    console.log('\n1. Try each network address shown above');
+    console.log('   • If multiple IPs listed, try them all');
+    console.log('   • The recommended (→) one should work best');
     console.log('\n2. Check your firewall:');
     console.log('   • Make sure port 3000 is allowed through your firewall');
     console.log('   • On Mac: System Preferences → Security → Firewall');
