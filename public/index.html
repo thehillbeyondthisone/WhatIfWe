@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What if we…</title>
+<style>
+  :root{
+    --bg: #0f172a;           /* slate-900 */
+    --panel: #0b1226;        /* deeper panel */
+    --muted: #1e293b;        /* slate-800 */
+    --muted-2:#334155;       /* slate-700 */
+    --text: #e5e7eb;         /* zinc-200 */
+    --subtle:#cbd5e1;        /* slate-300 */
+    --brand:#7dd3fc;         /* sky-300 */
+    --brand-2:#38bdf8;       /* sky-400 */
+    --accent:#f59e0b;        /* amber-500 */
+    --danger:#ef4444;        /* red-500 */
+    --ok:#22c55e;            /* green-500 */
+    --border: #243244;       /* cool border */
+    --chip-bg:#0f2238;
+    --chip-txt:#b0d6f7;
+    --shadow: 0 2px 14px rgba(0,0,0,.35);
+    --radius: 12px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,#0b1020 0%, var(--bg) 60%);
+    color:var(--text);
+    font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  }
+  .app{
+    max-width:1200px;
+    margin:0 auto;
+    padding:24px 20px 56px;
+  }
+  header{
+    display:flex; gap:16px; align-items:center; justify-content:space-between;
+    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+    position:sticky; top:16px; z-index:5;
+    backdrop-filter:saturate(120%) blur(4px);
+  }
+  .title{
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  }
+  .title h1{
+    margin:0; font-size:20px; letter-spacing:.3px; font-weight:700;
+  }
+  .subtitle{color:var(--subtle); font-size:12px}
+  .controls{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  }
+  .seg{
+    display:flex; background:var(--panel); border:1px solid var(--border);
+    border-radius:999px; overflow:hidden;
+  }
+  .seg button{
+    border:0; background:transparent; color:var(--subtle);
+    padding:8px 12px; cursor:pointer; font-weight:600;
+  }
+  .seg button.active{background:var(--muted); color:var(--text)}
+  .field, .select, .btn{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    border-radius:999px; padding:8px 12px; outline:none;
+  }
+  .field{min-width:200px}
+  .select{appearance:none}
+  .btn{cursor:pointer; font-weight:700}
+  .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#03121d; border:0}
+  .btn.ghost{background:transparent}
+  .btn.danger{background:var(--danger); border-color:transparent}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
+
+  /* layout */
+  .row{display:flex; gap:16px; margin-top:16px; align-items:center; flex-wrap:wrap}
+  .toolbar{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px;
+    box-shadow:var(--shadow);
+  }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--chip-bg); color:var(--chip-txt);
+    border:1px solid #1f3550; border-radius:999px; padding:6px 10px; font-weight:600;
+  }
+  .chip .x{opacity:.8; cursor:pointer}
+  .chips{display:flex; gap:8px; flex-wrap:wrap}
+
+  /* grid */
+  .grid{
+    margin-top:14px;
+    display:grid; gap:14px;
+    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+  }
+  .card{
+    border:1px solid var(--border);
+    background:linear-gradient(180deg, #0c162a, #0b1424);
+    border-radius:14px; overflow:hidden; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; min-height:120px;
+  }
+  .media{
+    position:relative; background:#081223; border-bottom:1px solid var(--border);
+    height:150px; display:flex; align-items:center; justify-content:center;
+  }
+  .media img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .media .badge{
+    position:absolute; top:8px; left:8px; font-size:11px; font-weight:700;
+    background:rgba(2,6,23,.8); border:1px solid var(--border);
+    color:var(--brand); padding:4px 8px; border-radius:999px;
+  }
+  .media .edit{
+    position:absolute; top:8px; right:8px;
+    background:rgba(2,6,23,.8); border:1px solid var(--border);
+    color:var(--text); padding:6px 10px; border-radius:999px; cursor:pointer;
+  }
+  .card-body{padding:12px}
+  .desc{
+    font-size:14px; font-weight:700; margin:0 0 8px; color:#dbeafe;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px}
+  .tag{
+    font-size:11px; background:#0b213a; color:#bfe0ff;
+    border:1px solid #163450; border-radius:999px; padding:4px 8px; font-weight:700;
+  }
+  .ratings{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    border-top:1px dashed var(--border); padding:10px 12px; margin-top:auto;
+  }
+  .stars{display:flex; gap:2px; cursor:pointer}
+  .stars .s{font-size:16px; color:#334155}
+  .stars .s.f{color:#fbbf24}
+  .peer{font-size:12px; color:var(--subtle)}
+  .row-actions{
+    display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border);
+  }
+  .row-actions .btn{border-radius:8px}
+
+  .empty{
+    border:1px dashed var(--border); border-radius:var(--radius);
+    padding:36px; text-align:center; color:var(--subtle); margin-top:14px;
+  }
+
+  /* modal (simple sheet) */
+  dialog{
+    border:none; border-radius:16px; padding:0; width:min(720px, calc(100% - 24px));
+    background:linear-gradient(180deg, #0c162a, #0b1424);
+    color:var(--text); box-shadow:0 30px 80px rgba(0,0,0,.6); border:1px solid var(--border);
+  }
+  .sheet{
+    display:flex; flex-direction:column; gap:0;
+  }
+  .sheet header{
+    position:sticky; inset:0; box-shadow:none; border-radius:16px 16px 0 0;
+    top:0; margin:0; padding:14px 16px; background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.25));
+  }
+  .sheet .content{padding:16px}
+  .f{display:flex; flex-direction:column; gap:10px}
+  .f .g{display:grid; gap:10px; grid-template-columns:1fr 1fr}
+  .f label{font-size:12px; color:var(--subtle)}
+  .f input[type="text"], .f input[type="url"], .f textarea{
+    border:1px solid var(--border); background:#0a1427; color:var(--text);
+    border-radius:10px; padding:10px 12px; outline:none;
+  }
+  textarea{min-height:90px; resize:vertical}
+  .sheet .footer{
+    display:flex; gap:10px; justify-content:flex-end; padding:12px 16px;
+    border-top:1px solid var(--border); background:rgba(0,0,0,.25); border-radius:0 0 16px 16px;
+  }
+
+  /* utility */
+  .hidden{display:none !important}
+  .grow{flex:1}
+  
+  @media (max-width: 768px) {
+    header{flex-direction:column; align-items:stretch}
+    .controls{flex-direction:column}
+    .field{min-width:100%}
+    .f .g{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header aria-label="Top bar">
+    <div class="title">
+      <h1>What if we…</h1>
+      <span class="subtitle">Plan, rate, and pick ideas together.</span>
+    </div>
+    <div class="controls">
+      <div class="seg" role="tablist" aria-label="Active person">
+        <button class="active" id="u1" onclick="ui.setUser('person1')" role="tab" aria-selected="true">Partner 1</button>
+        <button id="u2" onclick="ui.setUser('person2')" role="tab" aria-selected="false">Partner 2</button>
+      </div>
+      <input class="field" id="q" placeholder="Search description or tags…" oninput="ui.render()" aria-label="Search">
+      <select class="select" id="sort" onchange="ui.render()" aria-label="Sort">
+        <option value="date_desc">Newest</option>
+        <option value="date_asc">Oldest</option>
+        <option value="my_rating_desc">My rating ↓</option>
+        <option value="my_rating_asc">My rating ↑</option>
+        <option value="avg_desc">Avg rating ↓</option>
+        <option value="avg_asc">Avg rating ↑</option>
+      </select>
+      <button class="btn ghost" onclick="io.importJson()">Import</button>
+      <button class="btn ghost" onclick="io.exportJson()">Export</button>
+      <button class="btn primary" onclick="ui.openForm()">Add idea</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="chips" id="activeTags"></div>
+    <div class="grow"></div>
+    <button class="btn ghost" onclick="filters.clear()">Clear filters</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty hidden" id="emptyState">
+    No ideas match your filters yet. Add one or adjust search/sort.
+  </div>
+</div>
+
+<!-- Add/Edit sheet -->
+<dialog id="sheet">
+  <div class="sheet">
+    <header>
+      <div style="display:flex; align-items:center; gap:10px; width:100%">
+        <strong id="sheetTitle">Add idea</strong>
+        <div class="grow"></div>
+        <button class="btn ghost" onclick="ui.closeForm()">Close</button>
+      </div>
+    </header>
+    <div class="content">
+      <form class="f" id="form" onsubmit="formHandlers.save(event)">
+        <input type="hidden" id="id">
+        <div class="g">
+          <div>
+            <label for="desc">What's the idea? <span style="color:var(--accent)">*</span></label>
+            <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
+          </div>
+          <div>
+            <label for="tags">Tags (comma separated)</label>
+            <input type="text" id="tags" placeholder="outdoors, food, quick, rainy-day">
+          </div>
+        </div>
+        <div class="g">
+          <div>
+            <label for="video">Video URL (YouTube supported)</label>
+            <input type="url" id="video" placeholder="https://youtu.be/… or https://youtube.com/watch?v=…">
+          </div>
+          <div>
+            <label for="image">Image URL (optional)</label>
+            <input type="url" id="image" placeholder="https://…/photo.jpg or png/webp">
+          </div>
+        </div>
+        <div class="g">
+          <div>
+            <label>Your initial rating</label>
+            <div class="stars" id="myStars" aria-label="Your rating"></div>
+          </div>
+          <div>
+            <label>Partner's initial rating</label>
+            <div class="stars" id="theirStars" aria-label="Partner rating"></div>
+          </div>
+        </div>
+      </form>
+      <div style="margin-top:8px; font-size:12px; color:var(--subtle)">
+        Thumbnails: If you enter a YouTube link, the thumbnail is fetched automatically. If you provide an image URL, that's used. Otherwise the tile becomes text-only.
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn danger hidden" id="delBtn" onclick="formHandlers.del()">Delete</button>
+      <div class="grow"></div>
+      <button class="btn" onclick="ui.closeForm()">Cancel</button>
+      <button class="btn primary" form="form">Save</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* ---------- Data & API ---------- */
+const api = {
+  async getIdeas(){
+    const res = await fetch('/api/ideas');
+    return res.json();
+  },
+  async addIdea(idea){
+    const res = await fetch('/api/ideas', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(idea)
+    });
+    return res.json();
+  },
+  async updateIdea(id, updates){
+    const res = await fetch(`/api/ideas/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(updates)
+    });
+    return res.json();
+  },
+  async rateIdea(id, person, rating){
+    const res = await fetch(`/api/ideas/${id}/rate`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ person, rating })
+    });
+    return res.json();
+  },
+  async deleteIdea(id){
+    const res = await fetch(`/api/ideas/${id}`, { method: 'DELETE' });
+    return res.json();
+  },
+  async bulkUpdate(ideas){
+    const res = await fetch('/api/ideas/bulk', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ideas })
+    });
+    return res.json();
+  }
+};
+
+const state = {
+  user:'person1',
+  ideas: [],
+  query:'',
+  sort:'date_desc',
+  tagFilters:new Set(),
+};
+
+/* ---------- Utilities ---------- */
+const users = {person1:'Partner 1', person2:'Partner 2'};
+
+function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
+
+function ytId(url){
+  try{
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    if ((u.hostname.includes('youtube.com')||u.hostname.includes('www.youtube.com')) && u.searchParams.get('v'))
+      return u.searchParams.get('v');
+  }catch(_){}
+  return '';
+}
+function getThumb(idea){
+  if (idea.imageUrl) return idea.imageUrl;
+  const id = ytId(idea.videoUrl||'');
+  if (id) return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+  return '';
+}
+function esc(s){ const d=document.createElement('div'); d.textContent=String(s??''); return d.innerHTML; }
+function toTags(s){
+  return (s||'')
+    .split(',')
+    .map(t=>t.trim())
+    .filter(Boolean)
+    .slice(0,20);
+}
+
+/* ---------- Filters & sorting ---------- */
+const filters = {
+  clear(){
+    state.query=''; document.getElementById('q').value='';
+    state.tagFilters.clear(); ui.render();
+  },
+  apply(arr){
+    let out = arr;
+    const q = state.query.trim().toLowerCase();
+    if (q){
+      out = out.filter(i=>{
+        const hay = (i.description+' '+(i.tags||[]).join(' ')).toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    if (state.tagFilters.size){
+      out = out.filter(i => (i.tags||[]).some(t => state.tagFilters.has(t)));
+    }
+    const sort = state.sort;
+    out = out.slice().sort((a,b)=>{
+      switch(sort){
+        case 'date_asc': return (a.createdAt||0)-(b.createdAt||0);
+        case 'date_desc': return (b.createdAt||0)-(a.createdAt||0);
+        case 'my_rating_desc': return (b.ratings?.[state.user]||0)-(a.ratings?.[state.user]||0);
+        case 'my_rating_asc': return (a.ratings?.[state.user]||0)-(b.ratings?.[state.user]||0);
+        case 'avg_desc': return avgRating(b.ratings||{})-avgRating(a.ratings||{});
+        case 'avg_asc': return avgRating(a.ratings||{})-avgRating(b.ratings||{});
+      }
+      return 0;
+    });
+    return out;
+  }
+}
+
+/* ---------- UI ---------- */
+const ui = {
+  setUser(u){
+    state.user=u;
+    document.getElementById('u1').classList.toggle('active', u==='person1');
+    document.getElementById('u2').classList.toggle('active', u==='person2');
+    ui.render();
+  },
+  openForm(id){
+    const d = document.getElementById('sheet');
+    const isEdit = !!id;
+    const idea = isEdit ? state.ideas.find(i=>i.id===id) : null;
+
+    document.getElementById('sheetTitle').textContent = isEdit ? 'Edit idea' : 'Add idea';
+    document.getElementById('delBtn').classList.toggle('hidden', !isEdit);
+    document.getElementById('id').value = idea?.id || '';
+    document.getElementById('desc').value = idea?.description || '';
+    document.getElementById('video').value = idea?.videoUrl || '';
+    document.getElementById('image').value = idea?.imageUrl || '';
+    document.getElementById('tags').value = (idea?.tags||[]).join(', ');
+
+    stars.render('myStars', idea?.ratings?.[state.user] ?? 0, n=>stars.tmp.my=n);
+    const other = state.user==='person1'?'person2':'person1';
+    stars.render('theirStars', idea?.ratings?.[other] ?? 0, n=>stars.tmp.their=n);
+
+    stars.tmp.my = idea?.ratings?.[state.user] ?? 0;
+    stars.tmp.their = idea?.ratings?.[other] ?? 0;
+
+    d.showModal();
+  },
+  closeForm(){ document.getElementById('sheet').close(); },
+  addTagFilter(tag){
+    state.tagFilters.add(tag);
+    this.render();
+  },
+  removeTagFilter(tag){
+    state.tagFilters.delete(tag);
+    this.render();
+  },
+  render(){
+    state.query = document.getElementById('q').value || '';
+    state.sort  = document.getElementById('sort').value;
+
+    // Active tags at top
+    const tbar = document.getElementById('activeTags');
+    tbar.innerHTML = [...state.tagFilters].map(t =>
+      `<span class="chip">${esc(t)} <span class="x" onclick="ui.removeTagFilter('${esc(t)}')">×</span></span>`
+    ).join('');
+
+    // Grid
+    const grid = document.getElementById('grid');
+    const list = filters.apply(state.ideas);
+    document.getElementById('emptyState').classList.toggle('hidden', list.length>0);
+
+    grid.innerHTML = list.map(idea => ui.card(idea)).join('');
+
+    // wire up image error fallback to text-only
+    grid.querySelectorAll('img[data-id]').forEach(img=>{
+      img.onerror = () => {
+        const card = img.closest('.card');
+        if(card){
+          img.parentElement.classList.add('hidden');
+        }
+      }
+    });
+  },
+  card(idea){
+    const thumb = getThumb(idea);
+    const tags = (idea.tags||[]).slice(0,6);
+    const my = idea.ratings?.[state.user] || 0;
+    const otherUser = state.user==='person1'?'person2':'person1';
+    const their = idea.ratings?.[otherUser] || 0;
+
+    const media = thumb ? `
+      <div class="media">
+        <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
+        ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+      </div>` : '';
+
+    return `
+      <article class="card" onclick="ui.openDetail('${idea.id}')">
+        ${media}
+        <div class="card-body">
+          <p class="desc">${esc(idea.description)}</p>
+          <div class="tags">
+            ${tags.map(t => `<span class="tag" onclick="event.stopPropagation(); ui.addTagFilter('${esc(t)}')">#${esc(t)}</span>`).join('')}
+          </div>
+        </div>
+        <div class="ratings">
+          <div class="stars" onclick="event.stopPropagation();">
+            ${stars.inline(my, n=>rate(idea.id, state.user, n))}
+          </div>
+          <div class="peer">${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+          <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
+          <div class="grow"></div>
+          ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Open video</a>` : ''}
+        </div>
+      </article>
+    `;
+  },
+  openDetail(id){
+    this.openForm(id);
+  }
+};
+
+/* ---------- Stars ---------- */
+const stars = {
+  tmp:{my:0,their:0},
+  render(hostId, value, onSet){
+    const host = document.getElementById(hostId);
+    host.innerHTML = '';
+    for(let i=1;i<=5;i++){
+      const el = document.createElement('span');
+      el.className = 's'+(i<=value?' f':'');
+      el.textContent = '★';
+      el.title = String(i);
+      el.style.userSelect='none';
+      el.onclick = ()=>{ onSet(i); host.querySelectorAll('.s').forEach((n,ix)=>n.classList.toggle('f', ix < i)); };
+      host.appendChild(el);
+    }
+  },
+  inline(value, onSet){
+    let html = '';
+    for(let i=1;i<=5;i++){
+      html += `<span class="s ${i<=value?'f':''}" onclick="(${onSet})( ${i} )">★</span>`;
+    }
+    return html;
+  }
+};
+
+/* ---------- Form handlers ---------- */
+const formHandlers = {
+  async save(e){
+    e.preventDefault();
+    const id    = document.getElementById('id').value.trim();
+    const desc  = document.getElementById('desc').value.trim();
+    const video = document.getElementById('video').value.trim();
+    const image = document.getElementById('image').value.trim();
+    const tags  = toTags(document.getElementById('tags').value);
+
+    if (!desc){ alert('Please enter a description.'); return; }
+
+    const other = state.user==='person1'?'person2':'person1';
+    const myR   = stars.tmp.my|0;
+    const theirR= stars.tmp.their|0;
+
+    if (id){
+      // edit
+      await api.updateIdea(id, {
+        description: desc,
+        videoUrl: video,
+        imageUrl: image,
+        tags,
+        ratings: { [state.user]: myR, [other]: theirR }
+      });
+    } else {
+      // add
+      await api.addIdea({
+        description: desc,
+        videoUrl: video,
+        imageUrl: image,
+        tags,
+        ratings: { person1: state.user==='person1'?myR:theirR, person2: state.user==='person2'?myR:theirR }
+      });
+    }
+    
+    await loadIdeas();
+    ui.closeForm();
+    ui.render();
+  },
+  async del(idOpt){
+    const id = idOpt || document.getElementById('id').value;
+    if (!id) return;
+    if (!confirm('Delete this idea?')) return;
+    
+    await api.deleteIdea(id);
+    await loadIdeas();
+    
+    try{ document.getElementById('sheet').close(); }catch(_){}
+    ui.render();
+  }
+};
+
+/* ---------- Rating from cards ---------- */
+async function rate(id, who, n){
+  await api.rateIdea(id, who, n);
+  await loadIdeas();
+  ui.render();
+}
+
+/* ---------- Import / Export ---------- */
+const io = {
+  async exportJson(){
+    const data = JSON.stringify(state.ideas, null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {href:url, download:'what-if-we-export.json'});
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  },
+  async importJson(){
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.json,application/json';
+    inp.onchange = async () => {
+      const file = inp.files?.[0]; if(!file) return;
+      const fr = new FileReader();
+      fr.onload = async () => {
+        try{
+          const arr = JSON.parse(String(fr.result||'[]'));
+          if(!Array.isArray(arr)) throw new Error('Invalid format');
+          
+          // normalize
+          const normalized = arr.map(x => ({
+            id: String(x.id || Date.now()+Math.random()),
+            description: String(x.description||'').slice(0, 2000),
+            videoUrl: String(x.videoUrl||''),
+            imageUrl: String(x.imageUrl||''),
+            createdAt: x.createdAt || Date.now(),
+            tags: Array.isArray(x.tags) ? x.tags.map(String).slice(0,20) : toTags(x.tags),
+            ratings: { person1: x.ratings?.person1|0, person2: x.ratings?.person2|0 },
+            notes: Array.isArray(x.notes) ? x.notes : []
+          }));
+          
+          await api.bulkUpdate(normalized);
+          await loadIdeas();
+          ui.render();
+        }catch(err){
+          alert('Import failed: '+ err.message);
+        }
+      };
+      fr.readAsText(file);
+    };
+    inp.click();
+  }
+};
+
+/* ---------- Init ---------- */
+async function loadIdeas(){
+  state.ideas = await api.getIdeas();
+}
+
+document.getElementById('q').addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ e.currentTarget.value=''; state.query=''; ui.render(); }
+});
+
+(async function init(){
+  await loadIdeas();
+  ui.render();
+})();
+</script>
+</body>
+</html>
