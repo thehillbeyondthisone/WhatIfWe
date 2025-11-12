@@ -313,15 +313,9 @@
             <input type="url" id="image" placeholder="https://…/photo.jpg or png/webp">
           </div>
         </div>
-        <div class="g">
-          <div>
-            <label>Your initial rating</label>
-            <div class="stars" id="myStars" aria-label="Your rating"></div>
-          </div>
-          <div>
-            <label>Partner's initial rating</label>
-            <div class="stars" id="theirStars" aria-label="Partner rating"></div>
-          </div>
+        <div>
+          <label>Your rating</label>
+          <div class="stars" id="myStars" aria-label="Your rating"></div>
         </div>
       </form>
       <div style="margin-top:8px; font-size:12px; color:var(--subtle)">
@@ -484,11 +478,7 @@ const ui = {
     document.getElementById('tags').value = (idea?.tags||[]).join(', ');
 
     stars.render('myStars', idea?.ratings?.[state.user] ?? 0, n=>stars.tmp.my=n);
-    const other = state.user==='person1'?'person2':'person1';
-    stars.render('theirStars', idea?.ratings?.[other] ?? 0, n=>stars.tmp.their=n);
-
     stars.tmp.my = idea?.ratings?.[state.user] ?? 0;
-    stars.tmp.their = idea?.ratings?.[other] ?? 0;
 
     d.showModal();
   },
@@ -538,8 +528,8 @@ const ui = {
     // Show "NEW" badge if idea was created by other partner and current user hasn't rated it yet
     const isNewForMe = idea.createdBy && idea.createdBy === otherUser && my === 0;
 
-    // Show partner's rating only if both ratings are 3 or higher
-    const showPartnerRating = my >= 3 && their >= 3;
+    // Show partner's rating only if THEY rated it 3 or higher
+    const showPartnerRating = their >= 3;
     const partnerRatingDisplay = showPartnerRating
       ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
       : `${users[otherUser]}: Hidden`;
@@ -622,27 +612,26 @@ const formHandlers = {
 
     if (!desc){ alert('Please enter a description.'); return; }
 
-    const other = state.user==='person1'?'person2':'person1';
-    const myR   = stars.tmp.my|0;
-    const theirR= stars.tmp.their|0;
+    const myR = stars.tmp.my|0;
 
     if (id){
-      // edit
+      // edit - only update the content and current user's rating
+      const idea = state.ideas.find(i => i.id === id);
       await api.updateIdea(id, {
         description: desc,
         videoUrl: video,
         imageUrl: image,
         tags,
-        ratings: { [state.user]: myR, [other]: theirR }
+        ratings: { ...idea.ratings, [state.user]: myR }
       });
     } else {
-      // add
+      // add - only set the creator's rating
       await api.addIdea({
         description: desc,
         videoUrl: video,
         imageUrl: image,
         tags,
-        ratings: { person1: state.user==='person1'?myR:theirR, person2: state.user==='person2'?myR:theirR },
+        ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
         createdBy: state.user
       });
     }

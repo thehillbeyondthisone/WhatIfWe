@@ -2,6 +2,8 @@ const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
+const os = require('os');
+const qrcode = require('qrcode-terminal');
 
 const app = express();
 const PORT = 3000;
@@ -256,11 +258,33 @@ app.post('/api/ideas/bulk', async (req, res) => {
   }
 });
 
+// Get local IP address
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip internal (loopback) and non-IPv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
 // Start server
 initDataFile().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n✨ What if we… is running!`);
-    console.log(`\n📱 Access from this device: http://localhost:${PORT}`);
-    console.log(`📱 Access from other devices: http://YOUR_LOCAL_IP:${PORT}\n`);
+    const localIP = getLocalIP();
+    const localUrl = `http://${localIP}:${PORT}`;
+
+    console.log('\n' + '='.repeat(50));
+    console.log('✨  What if we… is running!');
+    console.log('='.repeat(50));
+    console.log(`\n📱 Local:   http://localhost:${PORT}`);
+    console.log(`🌐 Network: ${localUrl}\n`);
+    console.log('Scan this QR code with your phone:\n');
+    qrcode.generate(localUrl, { small: true });
+    console.log('\n' + '='.repeat(50) + '\n');
   });
 });
