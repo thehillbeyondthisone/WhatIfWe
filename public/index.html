@@ -119,6 +119,16 @@
     background:rgba(2,6,23,.8); border:1px solid var(--border);
     color:var(--brand); padding:4px 8px; border-radius:999px;
   }
+  .media .new-badge{
+    position:absolute; top:8px; right:8px; font-size:11px; font-weight:700;
+    background:var(--accent); border:1px solid #d97706;
+    color:#0f172a; padding:4px 8px; border-radius:999px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
   .media .edit{
     position:absolute; top:8px; right:8px;
     background:rgba(2,6,23,.8); border:1px solid var(--border);
@@ -183,6 +193,45 @@
   .hidden{display:none !important}
   .grow{flex:1}
   
+  /* Mobile mode - optimized for newest iPhones */
+  body.mobile-mode {
+    font-size: 16px; /* Prevent zoom on input focus */
+  }
+  body.mobile-mode .app {
+    padding: 16px 12px 40px;
+    max-width: 100%;
+  }
+  body.mobile-mode header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-radius: 0;
+    z-index: 100;
+  }
+  body.mobile-mode .toolbar {
+    margin-top: 80px;
+  }
+  body.mobile-mode .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  body.mobile-mode .card {
+    border-radius: 12px;
+  }
+  body.mobile-mode .field {
+    font-size: 16px;
+  }
+  body.mobile-mode .btn {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  body.mobile-mode dialog {
+    width: calc(100% - 16px);
+    max-height: 90vh;
+  }
+
   @media (max-width: 768px) {
     header{flex-direction:column; align-items:stretch}
     .controls{flex-direction:column}
@@ -203,6 +252,7 @@
         <button class="active" id="u1" onclick="ui.setUser('person1')" role="tab" aria-selected="true">Partner 1</button>
         <button id="u2" onclick="ui.setUser('person2')" role="tab" aria-selected="false">Partner 2</button>
       </div>
+      <button class="btn ghost" id="mobileToggle" onclick="ui.toggleMobileMode()" title="Toggle mobile mode">📱</button>
       <input class="field" id="q" placeholder="Search description or tags…" oninput="ui.render()" aria-label="Search">
       <select class="select" id="sort" onchange="ui.render()" aria-label="Sort">
         <option value="date_desc">Newest</option>
@@ -338,6 +388,7 @@ const state = {
   query:'',
   sort:'date_desc',
   tagFilters:new Set(),
+  mobileMode: false,
 };
 
 /* ---------- Utilities ---------- */
@@ -405,6 +456,14 @@ const filters = {
 
 /* ---------- UI ---------- */
 const ui = {
+  toggleMobileMode(){
+    state.mobileMode = !state.mobileMode;
+    document.body.classList.toggle('mobile-mode', state.mobileMode);
+    localStorage.setItem('mobileMode', state.mobileMode);
+    const btn = document.getElementById('mobileToggle');
+    btn.style.background = state.mobileMode ? 'var(--brand)' : 'transparent';
+    btn.style.color = state.mobileMode ? '#03121d' : 'var(--text)';
+  },
   setUser(u){
     state.user=u;
     document.getElementById('u1').classList.toggle('active', u==='person1');
@@ -476,12 +535,26 @@ const ui = {
     const otherUser = state.user==='person1'?'person2':'person1';
     const their = idea.ratings?.[otherUser] || 0;
 
+    // Show "NEW" badge if idea was created by other partner and current user hasn't rated it yet
+    const isNewForMe = idea.createdBy && idea.createdBy === otherUser && my === 0;
+
+    // Show partner's rating only if both ratings are 3 or higher
+    const showPartnerRating = my >= 3 && their >= 3;
+    const partnerRatingDisplay = showPartnerRating
+      ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
+      : `${users[otherUser]}: Hidden`;
+
     const media = thumb ? `
       <div class="media">
         <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
         ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
+        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
         <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-      </div>` : '';
+      </div>` : `
+      <div class="media">
+        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+      </div>`;
 
     return `
       <article class="card" onclick="ui.openDetail('${idea.id}')">
@@ -496,7 +569,7 @@ const ui = {
           <div class="stars" onclick="event.stopPropagation();">
             ${stars.inline(my, n=>rate(idea.id, state.user, n))}
           </div>
-          <div class="peer">${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}</div>
+          <div class="peer">${partnerRatingDisplay}</div>
         </div>
         <div class="row-actions">
           <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
@@ -569,7 +642,8 @@ const formHandlers = {
         videoUrl: video,
         imageUrl: image,
         tags,
-        ratings: { person1: state.user==='person1'?myR:theirR, person2: state.user==='person2'?myR:theirR }
+        ratings: { person1: state.user==='person1'?myR:theirR, person2: state.user==='person2'?myR:theirR },
+        createdBy: state.user
       });
     }
     
@@ -652,6 +726,16 @@ document.getElementById('q').addEventListener('keydown', e=>{
 });
 
 (async function init(){
+  // Load mobile mode preference from localStorage
+  const savedMobileMode = localStorage.getItem('mobileMode') === 'true';
+  if (savedMobileMode) {
+    state.mobileMode = true;
+    document.body.classList.add('mobile-mode');
+    const btn = document.getElementById('mobileToggle');
+    btn.style.background = 'var(--brand)';
+    btn.style.color = '#03121d';
+  }
+
   await loadIdeas();
   ui.render();
 })();

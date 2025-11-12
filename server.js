@@ -137,8 +137,8 @@ app.get('/api/ideas', async (req, res) => {
 // Add new idea
 app.post('/api/ideas', async (req, res) => {
   try {
-    const { description, videoUrl, imageUrl, tags, ratings } = req.body;
-    
+    const { description, videoUrl, imageUrl, tags, ratings, createdBy } = req.body;
+
     if (!description) {
       return res.status(400).json({ error: 'Description required' });
     }
@@ -152,12 +152,13 @@ app.post('/api/ideas', async (req, res) => {
       createdAt: Date.now(),
       tags: Array.isArray(tags) ? tags : [],
       ratings: ratings || { person1: 0, person2: 0 },
+      createdBy: createdBy || null,
       notes: []
     };
-    
+
     ideas.push(newIdea);
     await writeData(ideas);
-    
+
     res.json(newIdea);
   } catch (error) {
     res.status(500).json({ error: 'Failed to add idea' });
