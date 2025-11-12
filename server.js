@@ -278,13 +278,28 @@ initDataFile().then(() => {
     const localIP = getLocalIP();
     const localUrl = `http://${localIP}:${PORT}`;
 
-    console.log('\n' + '='.repeat(50));
+    console.log('\n' + '='.repeat(60));
     console.log('✨  What if we… is running!');
-    console.log('='.repeat(50));
-    console.log(`\n📱 Local:   http://localhost:${PORT}`);
-    console.log(`🌐 Network: ${localUrl}\n`);
-    console.log('Scan this QR code with your phone:\n');
+    console.log('='.repeat(60));
+    console.log(`\n📱 On this computer: http://localhost:${PORT}`);
+    console.log(`🌐 On same network:  ${localUrl}\n`);
+
+    console.log('📱 Scan with your phone:\n');
     qrcode.generate(localUrl, { small: true });
-    console.log('\n' + '='.repeat(50) + '\n');
+
+    console.log('\n' + '='.repeat(60));
+    console.log('🚨 TROUBLESHOOTING: Can\'t access from other devices?');
+    console.log('='.repeat(60));
+    console.log('\n1. Verify your computer\'s actual IP address:');
+    console.log('   • The detected IP above might be wrong');
+    console.log('   • Find your real IP and use: http://YOUR_REAL_IP:3000');
+    console.log('\n2. Check your firewall:');
+    console.log('   • Make sure port 3000 is allowed through your firewall');
+    console.log('   • On Mac: System Preferences → Security → Firewall');
+    console.log('   • On Windows: Windows Defender Firewall → Allow an app');
+    console.log('   • On Linux: sudo ufw allow 3000/tcp');
+    console.log('\n3. Verify devices are on the SAME Wi-Fi network');
+    console.log('\n4. Try disabling firewall temporarily to test');
+    console.log('\n' + '='.repeat(60) + '\n');
   });
 });
