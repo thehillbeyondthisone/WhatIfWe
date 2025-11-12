@@ -29,6 +29,8 @@
     background:linear-gradient(180deg,#0b1020 0%, var(--bg) 60%);
     color:var(--text);
     font:16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    /* Safe area insets for iOS */
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   /* Login screen */
@@ -90,7 +92,111 @@
   }
   .seg button.active{background:var(--brand); color:#0b1020}
 
-  /* Grid */
+  /* Swipe Container */
+  .swipe-container{
+    position:relative;
+    width:100%;
+    height:calc(100vh - 260px);
+    margin-top:140px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    overflow:hidden;
+  }
+
+  .swipe-stack{
+    position:relative;
+    width:100%;
+    max-width:400px;
+    height:100%;
+  }
+
+  .swipe-card{
+    position:absolute;
+    width:100%;
+    height:100%;
+    border:2px solid var(--border);
+    background:linear-gradient(180deg, #0c162a, #0b1424);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:transform 0.3s ease, opacity 0.3s ease;
+    cursor:grab;
+    touch-action:none;
+  }
+
+  .swipe-card:active{cursor:grabbing}
+
+  .swipe-card.swiping{transition:none}
+
+  .swipe-card.swiped-left{
+    transform:translateX(-150vw) rotate(-30deg);
+    opacity:0;
+    transition:all 0.3s ease-out;
+  }
+
+  .swipe-card.swiped-right{
+    transform:translateX(150vw) rotate(30deg);
+    opacity:0;
+    transition:all 0.3s ease-out;
+  }
+
+  /* Stack effect - cards behind */
+  .swipe-card:nth-child(2){
+    transform:scale(0.95) translateY(10px);
+    opacity:0.8;
+    z-index:1;
+  }
+
+  .swipe-card:nth-child(3){
+    transform:scale(0.9) translateY(20px);
+    opacity:0.6;
+    z-index:0;
+  }
+
+  .swipe-card:nth-child(n+4){
+    display:none;
+  }
+
+  /* Swipe indicators */
+  .swipe-indicator{
+    position:absolute;
+    top:40px;
+    font-size:72px;
+    font-weight:900;
+    padding:20px 30px;
+    border:4px solid;
+    border-radius:12px;
+    opacity:0;
+    transition:opacity 0.2s;
+    z-index:10;
+    pointer-events:none;
+  }
+
+  .swipe-indicator.like{
+    right:40px;
+    color:#22c55e;
+    border-color:#22c55e;
+    transform:rotate(20deg);
+  }
+
+  .swipe-indicator.nope{
+    left:40px;
+    color:#ef4444;
+    border-color:#ef4444;
+    transform:rotate(-20deg);
+  }
+
+  .swipe-card.dragging-right .swipe-indicator.like{
+    opacity:1;
+  }
+
+  .swipe-card.dragging-left .swipe-indicator.nope{
+    opacity:1;
+  }
+
+  /* Grid (for list view) */
   .grid{
     padding:16px; display:flex; flex-direction:column; gap:16px;
   }
@@ -104,6 +210,87 @@
     min-height:200px; display:flex; align-items:center; justify-content:center;
   }
   .media img{width:100%; height:100%; object-fit:cover; display:block}
+
+  /* Swipe card specific */
+  .swipe-card .media{
+    height:60%;
+    min-height:300px;
+  }
+
+  .swipe-card .media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .swipe-card .card-body{
+    height:40%;
+    display:flex;
+    flex-direction:column;
+    padding:20px;
+    overflow-y:auto;
+  }
+
+  .swipe-card .desc{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.4;
+    margin:0 0 16px;
+  }
+
+  .swipe-card .notes-text{
+    font-size:14px;
+    color:var(--subtle);
+    line-height:1.5;
+    margin-top:12px;
+  }
+
+  /* Action buttons for swipe mode */
+  .swipe-actions{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:16px;
+    z-index:20;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  .swipe-btn{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    border:3px solid;
+    background:rgba(11,18,38,0.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    cursor:pointer;
+    transition:all 0.2s;
+    backdrop-filter:blur(10px);
+  }
+
+  .swipe-btn:active{
+    transform:scale(0.9);
+  }
+
+  .swipe-btn.nope{
+    border-color:#ef4444;
+    color:#ef4444;
+  }
+
+  .swipe-btn.skip{
+    border-color:var(--brand);
+    color:var(--brand);
+    font-size:28px;
+  }
+
+  .swipe-btn.like{
+    border-color:#22c55e;
+    color:#22c55e;
+  }
   .media .badge{
     position:absolute; top:8px; left:8px; font-size:11px; font-weight:700;
     background:rgba(2,6,23,.9); border:1px solid var(--border);
@@ -178,23 +365,43 @@
   }
   dialog::backdrop{background:rgba(0,0,0,.8)}
   .sheet{display:flex; flex-direction:column; height:100%; overflow:hidden}
-  .sheet header{
-    padding:16px; background:var(--panel); border-bottom:1px solid var(--border);
-    display:flex; align-items:center; gap:12px;
-  }
-  .sheet header strong{flex:1; font-size:18px}
-  .sheet .content{padding:20px; overflow-y:auto; flex:1}
+  .sheet .content{padding:20px 20px 0; overflow-y:auto; flex:1}
   .f{display:flex; flex-direction:column; gap:16px}
   .f label{font-size:13px; color:var(--subtle); font-weight:600; margin-bottom:6px; display:block}
-  .f input[type="text"], .f input[type="url"], .f textarea{
+  .f input[type="text"], .f input[type="url"], .f input[type="file"], .f textarea{
     border:1px solid var(--border); background:var(--panel); color:var(--text);
     border-radius:8px; padding:12px; outline:none; font-size:16px; width:100%;
   }
   .f textarea{min-height:100px; resize:vertical; font-family:inherit}
   .f input[type="checkbox"]{width:20px; height:20px; cursor:pointer}
+  .f input[type="file"]{padding:10px}
   .sheet .footer{
     display:flex; gap:10px; padding:16px;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom));
     border-top:1px solid var(--border); background:var(--panel);
+  }
+
+  .view-mode-toggle{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+
+  .view-mode-toggle button{
+    border:0;
+    background:transparent;
+    color:var(--subtle);
+    padding:8px 14px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+  }
+
+  .view-mode-toggle button.active{
+    background:var(--brand);
+    color:#0b1020;
   }
 
   /* Notifications */
@@ -255,13 +462,28 @@
   </header>
 
   <div class="toolbar">
+    <div class="view-mode-toggle">
+      <button class="active" id="modeSwipe" onclick="ui.setMode('swipe')">💫 Swipe</button>
+      <button id="modeList" onclick="ui.setMode('list')">📋 List</button>
+    </div>
     <div class="seg">
       <button class="active" id="viewAll" onclick="ui.setView('all')">All Ideas</button>
       <button id="viewWould" onclick="ui.setView('would')">Would ✅</button>
     </div>
   </div>
 
-  <div class="grid" id="grid"></div>
+  <!-- Swipe Mode -->
+  <div class="swipe-container" id="swipeContainer">
+    <div class="swipe-stack" id="swipeStack"></div>
+    <div class="swipe-actions">
+      <div class="swipe-btn nope" onclick="swiper.swipeLeft()">✕</div>
+      <div class="swipe-btn skip" onclick="swiper.skip()">👁</div>
+      <div class="swipe-btn like" onclick="swiper.swipeRight()">❤</div>
+    </div>
+  </div>
+
+  <!-- List Mode -->
+  <div class="grid hidden" id="grid"></div>
   <div class="empty hidden" id="emptyState">
     No ideas yet. Tap "+ Add" to create one!
   </div>
@@ -273,10 +495,6 @@
 <!-- Edit Dialog -->
 <dialog id="sheet">
   <div class="sheet">
-    <header>
-      <strong id="sheetTitle">Add idea</strong>
-      <button class="btn ghost" onclick="ui.closeForm()">✕</button>
-    </header>
     <div class="content">
       <form class="f" id="form" onsubmit="formHandlers.save(event)">
         <input type="hidden" id="id">
@@ -285,12 +503,15 @@
           <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
         </div>
         <div>
-          <label for="video">Video URL (optional)</label>
-          <input type="url" id="video" placeholder="https://youtu.be/…">
+          <label for="imageFile">Upload Image 📸</label>
+          <input type="file" id="imageFile" accept="image/*" onchange="uploadHandlers.handleImageUpload(event)">
+          <div id="imagePreview" class="hidden" style="margin-top:10px">
+            <img id="imagePreviewImg" style="max-width:100%; border-radius:8px; border:1px solid var(--border)">
+          </div>
         </div>
         <div>
-          <label for="image">Image URL (optional)</label>
-          <input type="url" id="image" placeholder="https://…/photo.jpg">
+          <label for="video">Video URL (optional)</label>
+          <input type="url" id="video" placeholder="https://youtu.be/…">
         </div>
         <div>
           <label>Your rating</label>
@@ -310,6 +531,7 @@
     </div>
     <div class="footer">
       <button class="btn danger hidden" id="delBtn" onclick="formHandlers.del()">Delete</button>
+      <button class="btn ghost" onclick="ui.closeForm()">Cancel</button>
       <div class="grow"></div>
       <button class="btn primary" form="form">Save</button>
     </div>
@@ -367,6 +589,8 @@ const state = {
   query:'',
   sort:'date_desc',
   view: 'all',
+  mode: 'swipe', // 'swipe' or 'list'
+  currentImageData: null, // Base64 image data from upload
   lastSeenIdeas: JSON.parse(localStorage.getItem('lastSeenIdeas') || '[]'),
 };
 
@@ -377,7 +601,13 @@ const auth = {
     localStorage.setItem('loggedInUser', user);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
-    loadIdeas().then(() => ui.render());
+    loadIdeas().then(() => {
+      if (state.mode === 'swipe') {
+        ui.renderSwipe();
+      } else {
+        ui.render();
+      }
+    });
   },
   logout() {
     state.user = null;
@@ -399,6 +629,33 @@ const auth = {
 const users = {person1:'Partner 1', person2:'Partner 2'};
 
 function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
+
+/* ---------- Image Upload ---------- */
+const uploadHandlers = {
+  handleImageUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image too large! Please choose an image under 5MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      state.currentImageData = e.target.result;
+
+      // Show preview
+      const preview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('imagePreviewImg');
+      previewImg.src = e.target.result;
+      preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
 /* ---------- Notifications ---------- */
 const notifications = {
@@ -460,6 +717,129 @@ function getThumb(idea){
 }
 function esc(s){ const d=document.createElement('div'); d.textContent=String(s??''); return d.innerHTML; }
 
+/* ---------- Swipe Functionality ---------- */
+const swiper = {
+  currentCard: null,
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  isDragging: false,
+
+  init() {
+    const stack = document.getElementById('swipeStack');
+    if (!stack) return;
+
+    // Add touch/mouse event listeners
+    stack.addEventListener('mousedown', (e) => this.handleStart(e));
+    stack.addEventListener('touchstart', (e) => this.handleStart(e));
+    document.addEventListener('mousemove', (e) => this.handleMove(e));
+    document.addEventListener('touchmove', (e) => this.handleMove(e));
+    document.addEventListener('mouseup', (e) => this.handleEnd(e));
+    document.addEventListener('touchend', (e) => this.handleEnd(e));
+  },
+
+  handleStart(e) {
+    const target = e.target.closest('.swipe-card:first-child');
+    if (!target) return;
+
+    this.currentCard = target;
+    this.isDragging = true;
+
+    const point = e.type.includes('mouse') ? e : e.touches[0];
+    this.startX = point.clientX;
+    this.startY = point.clientY;
+    this.currentCard.classList.add('swiping');
+  },
+
+  handleMove(e) {
+    if (!this.isDragging || !this.currentCard) return;
+
+    const point = e.type.includes('mouse') ? e : e.touches[0];
+    this.currentX = point.clientX - this.startX;
+    this.currentY = point.clientY - this.startY;
+
+    const rotation = this.currentX / 20;
+    this.currentCard.style.transform = `translate(${this.currentX}px, ${this.currentY}px) rotate(${rotation}deg)`;
+
+    // Show indicators
+    if (this.currentX > 50) {
+      this.currentCard.classList.add('dragging-right');
+      this.currentCard.classList.remove('dragging-left');
+    } else if (this.currentX < -50) {
+      this.currentCard.classList.add('dragging-left');
+      this.currentCard.classList.remove('dragging-right');
+    } else {
+      this.currentCard.classList.remove('dragging-right', 'dragging-left');
+    }
+  },
+
+  handleEnd(e) {
+    if (!this.isDragging || !this.currentCard) return;
+
+    this.isDragging = false;
+    this.currentCard.classList.remove('swiping', 'dragging-right', 'dragging-left');
+
+    // Determine if swipe was strong enough
+    if (Math.abs(this.currentX) > 100) {
+      if (this.currentX > 0) {
+        this.completeSwipe('right');
+      } else {
+        this.completeSwipe('left');
+      }
+    } else {
+      // Snap back
+      this.currentCard.style.transform = '';
+      this.currentCard = null;
+    }
+  },
+
+  async completeSwipe(direction) {
+    if (!this.currentCard) return;
+
+    const ideaId = this.currentCard.dataset.id;
+    const rating = direction === 'right' ? 5 : 2;
+
+    // Animate off screen
+    this.currentCard.classList.add(direction === 'right' ? 'swiped-right' : 'swiped-left');
+
+    // Rate the idea
+    await rate(ideaId, state.user, rating);
+
+    // Remove card after animation
+    setTimeout(() => {
+      if (this.currentCard) {
+        this.currentCard.remove();
+        this.currentCard = null;
+      }
+      ui.renderSwipe();
+    }, 300);
+  },
+
+  swipeLeft() {
+    const card = document.querySelector('.swipe-card:first-child');
+    if (!card) return;
+    this.currentCard = card;
+    this.completeSwipe('left');
+  },
+
+  swipeRight() {
+    const card = document.querySelector('.swipe-card:first-child');
+    if (!card) return;
+    this.currentCard = card;
+    this.completeSwipe('right');
+  },
+
+  skip() {
+    const card = document.querySelector('.swipe-card:first-child');
+    if (!card) return;
+
+    // Open detail view
+    const ideaId = card.dataset.id;
+    ui.openForm(ideaId);
+  }
+};
+
 /* ---------- Filters & sorting ---------- */
 const filters = {
   clear(){
@@ -502,32 +882,77 @@ const filters = {
 
 /* ---------- UI ---------- */
 const ui = {
+  setMode(m){
+    state.mode = m;
+    document.getElementById('modeSwipe').classList.toggle('active', m==='swipe');
+    document.getElementById('modeList').classList.toggle('active', m==='list');
+
+    document.getElementById('swipeContainer').classList.toggle('hidden', m!=='swipe');
+    document.getElementById('grid').classList.toggle('hidden', m!=='list');
+
+    if (m === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
+  },
   setView(v){
     state.view = v;
     document.getElementById('viewAll').classList.toggle('active', v==='all');
     document.getElementById('viewWould').classList.toggle('active', v==='would');
-    ui.render();
+
+    if (state.mode === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
   },
   openForm(id){
     const d = document.getElementById('sheet');
     const isEdit = !!id;
     const idea = isEdit ? state.ideas.find(i=>i.id===id) : null;
 
-    document.getElementById('sheetTitle').textContent = isEdit ? 'Edit idea' : 'Add idea';
     document.getElementById('delBtn').classList.toggle('hidden', !isEdit);
     document.getElementById('id').value = idea?.id || '';
     document.getElementById('desc').value = idea?.description || '';
     document.getElementById('video').value = idea?.videoUrl || '';
-    document.getElementById('image').value = idea?.imageUrl || '';
     document.getElementById('notes').value = idea?.notes || '';
     document.getElementById('completed').checked = idea?.completed || false;
+
+    // Handle image preview
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = document.getElementById('imagePreviewImg');
+    const imageFileInput = document.getElementById('imageFile');
+
+    if (idea?.imageUrl) {
+      imagePreviewImg.src = idea.imageUrl;
+      imagePreview.classList.remove('hidden');
+    } else {
+      imagePreview.classList.add('hidden');
+    }
+    imageFileInput.value = '';
+    state.currentImageData = null;
 
     stars.render('myStars', idea?.ratings?.[state.user] ?? 0, n=>stars.tmp.my=n);
     stars.tmp.my = idea?.ratings?.[state.user] ?? 0;
 
     d.showModal();
   },
-  closeForm(){ document.getElementById('sheet').close(); },
+  closeForm(){
+    document.getElementById('sheet').close();
+    state.currentImageData = null;
+  },
+  renderSwipe(){
+    const stack = document.getElementById('swipeStack');
+    const list = filters.apply(state.ideas).filter(i => (i.ratings?.[state.user] || 0) === 0);
+
+    if (list.length === 0) {
+      stack.innerHTML = '<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">All caught up! 🎉<br><br>You\'ve rated all ideas.</div>';
+      return;
+    }
+
+    stack.innerHTML = list.slice(0, 3).map((idea, idx) => this.swipeCard(idea)).join('');
+  },
   render(){
     state.query = document.getElementById('q').value || '';
     state.sort  = document.getElementById('sort').value;
@@ -547,6 +972,33 @@ const ui = {
         }
       }
     });
+  },
+  swipeCard(idea){
+    const thumb = getThumb(idea);
+    const otherUser = state.user==='person1'?'person2':'person1';
+    const isNewForMe = idea.createdBy && idea.createdBy === otherUser;
+
+    const media = thumb ? `
+      <div class="media">
+        <img src="${esc(thumb)}" alt="" />
+        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+      </div>` : `
+      <div class="media" style="background:linear-gradient(135deg, #0f2238, #1a3a52)">
+        ${isNewForMe ? `<span class="new-badge">NEW</span>` : ''}
+        <div style="font-size:48px; opacity:0.3">💭</div>
+      </div>`;
+
+    return `
+      <div class="swipe-card" data-id="${idea.id}">
+        <div class="swipe-indicator like">LIKE</div>
+        <div class="swipe-indicator nope">NOPE</div>
+        ${media}
+        <div class="card-body">
+          <p class="desc">${esc(idea.description)}</p>
+          ${idea.notes ? `<div class="notes-text">📝 ${esc(idea.notes)}</div>` : ''}
+        </div>
+      </div>
+    `;
   },
   card(idea){
     const thumb = getThumb(idea);
@@ -657,9 +1109,17 @@ const formHandlers = {
     const id    = document.getElementById('id').value.trim();
     const desc  = document.getElementById('desc').value.trim();
     const video = document.getElementById('video').value.trim();
-    const image = document.getElementById('image').value.trim();
     const notes = document.getElementById('notes').value.trim();
     const completed = document.getElementById('completed').checked;
+
+    // Use uploaded image if available, otherwise keep existing
+    let imageUrl = '';
+    if (state.currentImageData) {
+      imageUrl = state.currentImageData; // Base64 image
+    } else if (id) {
+      const existingIdea = state.ideas.find(i => i.id === id);
+      imageUrl = existingIdea?.imageUrl || '';
+    }
 
     if (!desc){ alert('Please enter a description.'); return; }
 
@@ -672,7 +1132,7 @@ const formHandlers = {
       await api.updateIdea(id, {
         description: desc,
         videoUrl: video,
-        imageUrl: image,
+        imageUrl: imageUrl,
         notes,
         completed,
         ratings: { ...idea.ratings, [state.user]: myR }
@@ -688,7 +1148,7 @@ const formHandlers = {
       await api.addIdea({
         description: desc,
         videoUrl: video,
-        imageUrl: image,
+        imageUrl: imageUrl,
         notes,
         completed: false,
         ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
@@ -699,7 +1159,12 @@ const formHandlers = {
 
     await loadIdeas();
     ui.closeForm();
-    ui.render();
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   },
   async del(idOpt){
     const id = idOpt || document.getElementById('id').value;
@@ -835,6 +1300,7 @@ document.getElementById('q').addEventListener('keydown', e=>{
 
 (async function init(){
   auth.checkLogin();
+  swiper.init();
 })();
 </script>
 </body>
