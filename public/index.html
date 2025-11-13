@@ -87,7 +87,17 @@
     position:fixed; top:0; left:0; right:0; z-index:100;
   }
   .title{display:flex; align-items:center; justify-content:space-between; width:100%}
-  .title h1{margin:0; font-size:20px; letter-spacing:.3px; font-weight:700}
+  .title h1{
+    margin:0;
+    font-size:24px;
+    letter-spacing:.5px;
+    font-weight:800;
+    background:linear-gradient(135deg, var(--brand), #a855f7);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    text-shadow:0 0 40px rgba(96,165,250,0.3);
+  }
   .subtitle{color:var(--subtle); font-size:12px; margin-left:auto}
   .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 
@@ -181,6 +191,7 @@
     display:flex;
     flex-direction:column;
     padding:16px;
+    padding-bottom:120px; /* Extra space for action buttons */
     overflow-y:auto;
   }
 
@@ -534,8 +545,8 @@
   <h1>What if we…</h1>
   <p>Choose your profile to continue</p>
   <div class="login-buttons">
-    <button class="login-btn" onclick="auth.login('person1')">Partner 1</button>
-    <button class="login-btn" onclick="auth.login('person2')">Partner 2</button>
+    <button class="login-btn" onclick="auth.login('person1')">Laura</button>
+    <button class="login-btn" onclick="auth.login('person2')">Boden</button>
   </div>
 </div>
 
@@ -564,6 +575,13 @@
             <button class="active" id="viewAll" onclick="ui.setView('all')">All Ideas</button>
             <button id="viewDeclined" onclick="ui.setView('declined')">Declined</button>
             <button id="viewWould" onclick="ui.setView('would')">Would ✅</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Theme</label>
+          <div class="seg">
+            <button class="active" id="themeBlue" onclick="theme.set('blue')">💙 Blue</button>
+            <button id="themePink" onclick="theme.set('pink')">💕 Pink</button>
           </div>
         </div>
         <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
@@ -632,6 +650,9 @@
         <div>
           <label>Your rating</label>
           <div class="stars" id="myStars"></div>
+        </div>
+        <div id="partnerRatingSection" class="hidden" style="margin-top:-8px; margin-bottom:12px; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:13px; color:var(--subtle);">
+          <span id="partnerRatingDisplay"></span>
         </div>
         <div>
           <label for="notes">Notes (visible to both)</label>
@@ -711,6 +732,57 @@ const state = {
   currentIndex: 0 // Current card index in carousel
 };
 
+/* ---------- Theme System ---------- */
+const theme = {
+  current: localStorage.getItem('theme') || 'blue',
+
+  themes: {
+    blue: {
+      '--bg': '#020617',
+      '--panel': '#0f172a',
+      '--muted': '#1e293b',
+      '--border': '#334155',
+      '--text': '#cbd5e1',
+      '--subtle': '#94a3b8',
+      '--brand': '#60a5fa'
+    },
+    pink: {
+      '--bg': '#1a0d1f',
+      '--panel': '#2d1b3d',
+      '--muted': '#3d2648',
+      '--border': '#553c64',
+      '--text': '#e9d5ff',
+      '--subtle': '#c084fc',
+      '--brand': '#d946ef'
+    }
+  },
+
+  init() {
+    this.apply(this.current);
+  },
+
+  set(name) {
+    if (!this.themes[name]) return;
+    this.current = name;
+    localStorage.setItem('theme', name);
+    this.apply(name);
+
+    // Update button states
+    document.getElementById('themeBlue').classList.toggle('active', name === 'blue');
+    document.getElementById('themePink').classList.toggle('active', name === 'pink');
+  },
+
+  apply(name) {
+    const colors = this.themes[name];
+    if (!colors) return;
+
+    const root = document.documentElement;
+    Object.entries(colors).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+  }
+};
+
 /* ---------- Authentication ---------- */
 const auth = {
   login(user) {
@@ -741,7 +813,7 @@ const auth = {
 };
 
 /* ---------- Utilities ---------- */
-const users = {person1:'Partner 1', person2:'Partner 2'};
+const users = {person1:'Laura', person2:'Boden'};
 
 function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
 
@@ -898,7 +970,12 @@ const filters = {
 
     // Filter by view
     if (state.view === 'would') {
-      out = out.filter(i => i.completed === true);
+      // Would = both partners rated 3+ hearts
+      out = out.filter(i => {
+        const rating1 = i.ratings?.person1 || 0;
+        const rating2 = i.ratings?.person2 || 0;
+        return rating1 >= 3 && rating2 >= 3;
+      });
     } else if (state.view === 'declined') {
       // Declined = rated 1-2 stars by current user
       out = out.filter(i => {
@@ -1007,6 +1084,23 @@ const ui = {
     stars.render('myStars', idea?.ratings?.[state.user] ?? 0, n=>stars.tmp.my=n);
     stars.tmp.my = idea?.ratings?.[state.user] ?? 0;
 
+    // Show partner rating if they rated 3+
+    if (idea) {
+      const otherUser = state.user==='person1'?'person2':'person1';
+      const theirRating = idea.ratings?.[otherUser] || 0;
+      const partnerSection = document.getElementById('partnerRatingSection');
+      const partnerDisplay = document.getElementById('partnerRatingDisplay');
+
+      if (theirRating >= 3) {
+        partnerDisplay.innerHTML = `<strong>${users[otherUser]}</strong>: ${'💖'.repeat(theirRating)}${'🤍'.repeat(5-theirRating)}`;
+        partnerSection.classList.remove('hidden');
+      } else {
+        partnerSection.classList.add('hidden');
+      }
+    } else {
+      document.getElementById('partnerRatingSection').classList.add('hidden');
+    }
+
     d.showModal();
   },
   closeForm(){
@@ -1023,7 +1117,7 @@ const ui = {
       if (state.view === 'declined') {
         message = 'No declined ideas.<br><br>Tap ✕ to decline ideas.';
       } else if (state.view === 'would') {
-        message = 'No completed ideas.<br><br>Check off ideas you\'ve done!';
+        message = 'No mutual favorites yet!<br><br>Both partners need to rate an idea 3+ hearts 💖';
       }
       stack.innerHTML = `<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">${message}</div>`;
       document.getElementById('carouselIndicators').innerHTML = '';
@@ -1076,7 +1170,16 @@ const ui = {
     const thumb = getThumb(idea);
     const otherUser = state.user==='person1'?'person2':'person1';
     const myRating = idea.ratings?.[state.user] || 0;
+    const theirRating = idea.ratings?.[otherUser] || 0;
     const isUnrated = myRating === 0;
+
+    // Show partner's rating if they rated 3+
+    const showPartnerRating = theirRating >= 3;
+    const partnerRatingHtml = showPartnerRating ? `
+      <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:12px; color:var(--subtle);">
+        <strong>${users[otherUser]}</strong>: ${'💖'.repeat(theirRating)}${'🤍'.repeat(5-theirRating)}
+      </div>
+    ` : '';
 
     // Render comments
     const comments = idea.comments || [];
@@ -1109,6 +1212,7 @@ const ui = {
           <div class="rating-section">
             <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Rate this idea</label>
             <div class="stars-inline">${starsHtml}</div>
+            ${partnerRatingHtml}
           </div>
           <div class="comments-section">
             ${commentsHtml}
@@ -1413,8 +1517,13 @@ document.getElementById('q').addEventListener('keydown', e=>{
 });
 
 (async function init(){
+  theme.init();
   auth.checkLogin();
   carousel.init();
+
+  // Update theme button states
+  document.getElementById('themeBlue').classList.toggle('active', theme.current === 'blue');
+  document.getElementById('themePink').classList.toggle('active', theme.current === 'pink');
 })();
 </script>
 </body>
