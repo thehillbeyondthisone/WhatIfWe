@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>What if we…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #0f172a;           /* slate-900 */
@@ -89,14 +92,17 @@
   .title{display:flex; align-items:center; justify-content:space-between; width:100%}
   .title h1{
     margin:0;
-    font-size:24px;
-    letter-spacing:.5px;
-    font-weight:800;
-    background:linear-gradient(135deg, var(--brand), #a855f7);
-    -webkit-background-clip:text;
-    background-clip:text;
-    -webkit-text-fill-color:transparent;
-    text-shadow:0 0 40px rgba(96,165,250,0.3);
+    font-family:'Pacifico', cursive;
+    font-size:28px;
+    letter-spacing:1px;
+    font-weight:400;
+    color:var(--brand);
+    text-shadow:
+      -1px -1px 0 #fff,
+      1px -1px 0 #fff,
+      -1px 1px 0 #fff,
+      1px 1px 0 #fff,
+      0 4px 12px rgba(0,0,0,0.5);
   }
   .subtitle{color:var(--subtle); font-size:12px; margin-left:auto}
   .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
@@ -191,7 +197,7 @@
     display:flex;
     flex-direction:column;
     padding:16px;
-    padding-bottom:120px; /* Extra space for action buttons */
+    padding-bottom:160px; /* Extra space for carousel indicators and action buttons */
     overflow-y:auto;
   }
 
@@ -400,6 +406,9 @@
   .action-btn.decline{
     border-color:#ef4444;
     color:#ef4444;
+    font-size:18px;
+    font-weight:700;
+    text-transform:lowercase;
   }
 
   .action-btn.edit{
@@ -421,6 +430,14 @@
     animation: pulse 2s ease-in-out infinite;
     z-index:3;
     backdrop-filter:blur(10px);
+  }
+  .media .would-badge{
+    position:absolute; top:20px; left:20px; font-size:13px; font-weight:700;
+    background:rgba(34,197,94,0.95); border:1px solid #16a34a;
+    color:#fff; padding:6px 12px; border-radius:8px;
+    z-index:3;
+    backdrop-filter:blur(10px);
+    box-shadow:0 2px 8px rgba(34,197,94,0.3);
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -611,7 +628,7 @@
 
     <!-- Action Buttons -->
     <div class="swipe-actions">
-      <button class="action-btn decline" onclick="carousel.decline()" title="Decline this idea">✕</button>
+      <button class="action-btn decline" onclick="carousel.decline()" title="Decline this idea">no.</button>
       <button class="action-btn edit" onclick="carousel.edit()" title="View details">👁</button>
     </div>
   </div>
@@ -668,6 +685,7 @@
     </div>
     <div class="footer">
       <button class="btn danger hidden" id="delBtn" onclick="formHandlers.del()">Delete</button>
+      <button class="btn primary hidden" id="restoreBtn" onclick="formHandlers.restore()">↺ Restore</button>
       <button class="btn ghost" onclick="ui.closeForm()">Cancel</button>
       <div class="grow"></div>
       <button class="btn primary" form="form">Save</button>
@@ -956,6 +974,12 @@ const carousel = {
     const idea = this.filteredIdeas[state.currentIndex];
     if (!idea) return;
     ui.openForm(idea.id);
+  },
+
+  async restore(ideaId) {
+    // Reset rating to 0 (unrated) to restore to All Ideas
+    await rate(ideaId, state.user, 0);
+    notifications.show('Restored!', 'Idea moved back to All Ideas');
   }
 };
 
@@ -1061,6 +1085,11 @@ const ui = {
     const idea = isEdit ? state.ideas.find(i=>i.id===id) : null;
 
     document.getElementById('delBtn').classList.toggle('hidden', !isEdit);
+
+    // Show restore button only for declined ideas (rated 1-2)
+    const isDeclined = idea && (idea.ratings?.[state.user] >= 1 && idea.ratings?.[state.user] <= 2);
+    document.getElementById('restoreBtn').classList.toggle('hidden', !isDeclined);
+
     document.getElementById('id').value = idea?.id || '';
     document.getElementById('desc').value = idea?.description || '';
     document.getElementById('video').value = idea?.videoUrl || '';
@@ -1173,6 +1202,9 @@ const ui = {
     const theirRating = idea.ratings?.[otherUser] || 0;
     const isUnrated = myRating === 0;
 
+    // Check if this is a "Would" item (both rated 3+)
+    const isWould = myRating >= 3 && theirRating >= 3;
+
     // Show partner's rating if they rated 3+
     const showPartnerRating = theirRating >= 3;
     const partnerRatingHtml = showPartnerRating ? `
@@ -1190,12 +1222,16 @@ const ui = {
       </div>
     `).join('');
 
+    const wouldBadge = isWould ? `<span class="would-badge">Would ✅</span>` : '';
+
     const media = thumb ? `
       <div class="media">
         <img src="${esc(thumb)}" alt="" />
+        ${wouldBadge}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
       </div>` : `
       <div class="media" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #0f2238, #1a3a52)">
+        ${wouldBadge}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
         <div style="font-size:48px; opacity:0.3">💭</div>
       </div>`;
@@ -1203,6 +1239,14 @@ const ui = {
     // Create inline rating function
     const rateHandler = `async (n) => { await rate('${idea.id}', '${state.user}', n); }`;
     const starsHtml = stars.inline(myRating, rateHandler);
+
+    // Show restore button for declined ideas
+    const isDeclined = myRating >= 1 && myRating <= 2;
+    const restoreButtonHtml = isDeclined ? `
+      <button class="btn primary" onclick="event.stopPropagation(); carousel.restore('${idea.id}')" style="margin-top:12px; width:100%;">
+        ↺ Restore to All Ideas
+      </button>
+    ` : '';
 
     return `
       <div class="swipe-card" data-id="${idea.id}">
@@ -1213,6 +1257,7 @@ const ui = {
             <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Rate this idea</label>
             <div class="stars-inline">${starsHtml}</div>
             ${partnerRatingHtml}
+            ${restoreButtonHtml}
           </div>
           <div class="comments-section">
             ${commentsHtml}
@@ -1417,20 +1462,14 @@ const formHandlers = {
   },
   async restore(ideaId) {
     // Restore a declined idea by setting rating to 0
-    const idea = state.ideas.find(i => i.id === ideaId);
-    if (!idea) return;
+    const id = ideaId || document.getElementById('id').value;
+    if (!id) return;
 
-    await api.updateIdea(ideaId, {
-      ratings: { ...idea.ratings, [state.user]: 0 }
-    });
+    await rate(id, state.user, 0);
 
-    await loadIdeas();
+    try{ document.getElementById('sheet').close(); }catch(_){}
 
-    if (state.mode === 'swipe') {
-      ui.renderSwipe();
-    } else {
-      ui.render();
-    }
+    notifications.show('Restored!', 'Idea moved back to All Ideas');
   }
 };
 
