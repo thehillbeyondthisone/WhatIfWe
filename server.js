@@ -2,6 +2,8 @@ const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
+const os = require('os');
+const qrcode = require('qrcode-terminal');
 
 const app = express();
 const PORT = 3000;
@@ -21,40 +23,125 @@ async function initDataFile() {
         description: 'Take a pottery class together',
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         imageUrl: '',
-        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 5,
-        tags: ['class', 'hands-on', 'creative'],
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 10,
         ratings: { person1: 4, person2: 5 },
-        notes: []
+        notes: '',
+        completed: false,
+        comments: [
+          { user: 'person1', text: 'This looks fun!', timestamp: Date.now() - 1000 * 60 * 60 * 2 },
+          { user: 'person2', text: 'I agree! Let\'s do it this weekend!', timestamp: Date.now() - 1000 * 60 * 60 }
+        ],
+        createdBy: null
       },
       {
         id: '2',
         description: 'Try the new sushi restaurant downtown',
         videoUrl: '',
         imageUrl: 'https://images.unsplash.com/photo-1553621042-f6e147245754?q=80&w=1200&auto=format&fit=crop',
-        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 4,
-        tags: ['food', 'night-out'],
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 9,
         ratings: { person1: 5, person2: 4 },
-        notes: []
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
       },
       {
         id: '3',
         description: 'Escape room adventure',
         videoUrl: 'https://youtu.be/3GwjfUFyY6M',
         imageUrl: '',
-        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
-        tags: ['game', 'puzzle', 'indoor'],
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 8,
         ratings: { person1: 2, person2: 5 },
-        notes: []
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
       },
       {
         id: '4',
         description: 'Wine tasting at the local vineyard',
         videoUrl: '',
         imageUrl: '',
-        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
-        tags: ['outdoors', 'day-trip', 'relaxed'],
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 7,
         ratings: { person1: 0, person2: 0 },
-        notes: []
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
+      },
+      {
+        id: '5',
+        description: 'Sunset picnic at the beach',
+        videoUrl: '',
+        imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&auto=format&fit=crop',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
+        ratings: { person1: 5, person2: 0 },
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
+      },
+      {
+        id: '6',
+        description: 'Indoor rock climbing',
+        videoUrl: '',
+        imageUrl: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?q=80&w=1200&auto=format&fit=crop',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 5,
+        ratings: { person1: 0, person2: 3 },
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
+      },
+      {
+        id: '7',
+        description: 'Visit the art museum and brunch',
+        videoUrl: '',
+        imageUrl: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=1200&auto=format&fit=crop',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 4,
+        ratings: { person1: 0, person2: 0 },
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
+      },
+      {
+        id: '8',
+        description: 'Weekend getaway to the mountains',
+        videoUrl: '',
+        imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&auto=format&fit=crop',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
+        ratings: { person1: 0, person2: 4 },
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
+      },
+      {
+        id: '9',
+        description: 'Cook a fancy dinner together at home',
+        videoUrl: '',
+        imageUrl: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1200&auto=format&fit=crop',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
+        ratings: { person1: 5, person2: 5 },
+        notes: '',
+        completed: false,
+        comments: [
+          { user: 'person1', text: 'Love this idea!', timestamp: Date.now() - 1000 * 60 * 30 }
+        ],
+        createdBy: null
+      },
+      {
+        id: '10',
+        description: 'Take dance lessons',
+        videoUrl: '',
+        imageUrl: '',
+        createdAt: Date.now() - 1000 * 60 * 60 * 24 * 1,
+        ratings: { person1: 0, person2: 0 },
+        notes: '',
+        completed: false,
+        comments: [],
+        createdBy: null
       }
     ];
     await fs.writeFile(DATA_FILE, JSON.stringify(sample, null, 2));
@@ -137,8 +224,8 @@ app.get('/api/ideas', async (req, res) => {
 // Add new idea
 app.post('/api/ideas', async (req, res) => {
   try {
-    const { description, videoUrl, imageUrl, tags, ratings } = req.body;
-    
+    const { description, videoUrl, imageUrl, ratings, createdBy, notes, completed, comments } = req.body;
+
     if (!description) {
       return res.status(400).json({ error: 'Description required' });
     }
@@ -150,14 +237,16 @@ app.post('/api/ideas', async (req, res) => {
       videoUrl: videoUrl || '',
       imageUrl: imageUrl || '',
       createdAt: Date.now(),
-      tags: Array.isArray(tags) ? tags : [],
       ratings: ratings || { person1: 0, person2: 0 },
-      notes: []
+      createdBy: createdBy || null,
+      notes: notes || '',
+      completed: completed || false,
+      comments: comments || []
     };
-    
+
     ideas.push(newIdea);
     await writeData(ideas);
-    
+
     res.json(newIdea);
   } catch (error) {
     res.status(500).json({ error: 'Failed to add idea' });
@@ -168,26 +257,28 @@ app.post('/api/ideas', async (req, res) => {
 app.patch('/api/ideas/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, videoUrl, imageUrl, tags, ratings } = req.body;
-    
+    const { description, videoUrl, imageUrl, ratings, notes, completed, comments } = req.body;
+
     let ideas = await readData();
     const ideaIndex = ideas.findIndex(i => i.id === id);
-    
+
     if (ideaIndex === -1) {
       return res.status(404).json({ error: 'Idea not found' });
     }
-    
+
     const idea = ideas[ideaIndex];
-    
+
     if (description !== undefined) idea.description = description;
     if (videoUrl !== undefined) idea.videoUrl = videoUrl;
     if (imageUrl !== undefined) idea.imageUrl = imageUrl;
-    if (tags !== undefined) idea.tags = Array.isArray(tags) ? tags : [];
     if (ratings !== undefined) idea.ratings = ratings;
-    
+    if (notes !== undefined) idea.notes = notes;
+    if (completed !== undefined) idea.completed = completed;
+    if (comments !== undefined) idea.comments = comments;
+
     ideas[ideaIndex] = idea;
     await writeData(ideas);
-    
+
     res.json(idea);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update idea' });
@@ -255,11 +346,84 @@ app.post('/api/ideas/bulk', async (req, res) => {
   }
 });
 
+// Get local IP address - prioritize common home network ranges
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip internal (loopback) and non-IPv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push({ address: iface.address, name });
+      }
+    }
+  }
+
+  // Priority order for home networks
+  const priorities = [
+    /^192\.168\.1\./,    // Most common home router default
+    /^192\.168\.0\./,    // Second most common
+    /^192\.168\.\d+\./,  // Any other 192.168.x.x
+    /^10\.0\.0\./,       // Some routers use 10.x
+    /^10\.\d+\.\d+\./,   // Any other 10.x.x.x
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16-31.x.x (private range)
+  ];
+
+  // Try to find best match based on priority
+  for (const pattern of priorities) {
+    const match = addresses.find(a => pattern.test(a.address));
+    if (match) {
+      return { address: match.address, allAddresses: addresses };
+    }
+  }
+
+  // If no priority match, return first found
+  if (addresses.length > 0) {
+    return { address: addresses[0].address, allAddresses: addresses };
+  }
+
+  return { address: 'localhost', allAddresses: [] };
+}
+
 // Start server
 initDataFile().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n✨ What if we… is running!`);
-    console.log(`\n📱 Access from this device: http://localhost:${PORT}`);
-    console.log(`📱 Access from other devices: http://YOUR_LOCAL_IP:${PORT}\n`);
+    const ipInfo = getLocalIP();
+    const localUrl = `http://${ipInfo.address}:${PORT}`;
+
+    console.log('\n' + '='.repeat(60));
+    console.log('✨  What if we… is running!');
+    console.log('='.repeat(60));
+    console.log(`\n📱 On this computer: http://localhost:${PORT}`);
+    console.log(`🌐 On same network:  ${localUrl}\n`);
+
+    // Show all detected IPs if multiple found
+    if (ipInfo.allAddresses.length > 1) {
+      console.log('📍 All detected network addresses:');
+      ipInfo.allAddresses.forEach(addr => {
+        const marker = addr.address === ipInfo.address ? '→ ' : '  ';
+        console.log(`${marker}http://${addr.address}:${PORT} (${addr.name})`);
+      });
+      console.log('   → = recommended address for your LAN\n');
+    }
+
+    console.log('📱 Scan with your phone:\n');
+    qrcode.generate(localUrl, { small: true });
+
+    console.log('\n' + '='.repeat(60));
+    console.log('🚨 TROUBLESHOOTING: Can\'t access from other devices?');
+    console.log('='.repeat(60));
+    console.log('\n1. Try each network address shown above');
+    console.log('   • If multiple IPs listed, try them all');
+    console.log('   • The recommended (→) one should work best');
+    console.log('\n2. Check your firewall:');
+    console.log('   • Make sure port 3000 is allowed through your firewall');
+    console.log('   • On Mac: System Preferences → Security → Firewall');
+    console.log('   • On Windows: Windows Defender Firewall → Allow an app');
+    console.log('   • On Linux: sudo ufw allow 3000/tcp');
+    console.log('\n3. Verify devices are on the SAME Wi-Fi network');
+    console.log('\n4. Try disabling firewall temporarily to test');
+    console.log('\n' + '='.repeat(60) + '\n');
   });
 });

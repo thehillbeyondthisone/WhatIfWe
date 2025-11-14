@@ -7,10 +7,16 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["date", "ideas", "couples", "planning"],
+  "keywords": [
+    "date",
+    "ideas",
+    "couples",
+    "planning"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "qrcode-terminal": "^0.12.0"
   }
 }

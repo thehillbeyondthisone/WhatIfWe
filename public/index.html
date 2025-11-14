@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>What if we…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #0f172a;           /* slate-900 */
@@ -24,264 +27,604 @@
     --radius: 12px;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%; margin:0; padding:0; overflow-x:hidden}
   body{
-    margin:0;
     background:linear-gradient(180deg,#0b1020 0%, var(--bg) 60%);
     color:var(--text);
-    font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    font:16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    /* Safe area insets for iOS */
+    padding-bottom: env(safe-area-inset-bottom);
   }
-  .app{
-    max-width:1200px;
-    margin:0 auto;
-    padding:24px 20px 56px;
+
+  /* Login screen */
+  .login-screen{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding:20px; text-align:center;
+    background:var(--bg);
   }
-  header{
-    display:flex; gap:16px; align-items:center; justify-content:space-between;
-    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
+  .login-screen h1{font-size:32px; margin:0 0 10px; letter-spacing:.3px}
+  .login-screen p{color:var(--subtle); margin:0 0 40px; font-size:16px}
+  .login-buttons{display:flex; flex-direction:column; gap:16px; width:100%; max-width:300px}
+  .login-btn{
+    padding:18px 24px; border:2px solid var(--brand); border-radius:12px;
+    background:linear-gradient(180deg, rgba(125,211,252,.1), rgba(125,211,252,.05));
+    color:var(--brand); font-size:18px; font-weight:700; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .login-btn:active{transform:scale(0.98); background:var(--brand); color:#0b1020}
+
+  /* Settings Menu */
+  .settings-toggle{
+    background:transparent;
     border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:14px 16px;
-    box-shadow:var(--shadow);
-    position:sticky; top:16px; z-index:5;
-    backdrop-filter:saturate(120%) blur(4px);
+    color:var(--text);
+    padding:10px;
+    border-radius:8px;
+    font-size:20px;
+    cursor:pointer;
   }
-  .title{
-    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+
+  .settings-panel{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:8px;
+    padding:12px;
+    background:var(--muted);
+    border:1px solid var(--border);
+    border-radius:8px;
   }
+
+  .settings-panel.hidden{
+    display:none;
+  }
+
+  .app{
+    max-width:100%; margin:0; padding:0 0 80px;
+  }
+
+  /* Header - fixed at top */
+  header{
+    display:flex; gap:12px; flex-direction:column; padding:16px;
+    background:var(--panel); border-bottom:1px solid var(--border);
+    position:fixed; top:0; left:0; right:0; z-index:100;
+  }
+  .title{display:flex; align-items:center; justify-content:space-between; width:100%}
   .title h1{
-    margin:0; font-size:20px; letter-spacing:.3px; font-weight:700;
+    margin:0;
+    font-family:'Pacifico', cursive;
+    font-size:28px;
+    letter-spacing:1px;
+    font-weight:400;
+    color:var(--brand);
+    text-shadow:
+      -1px -1px 0 #fff,
+      1px -1px 0 #fff,
+      -1px 1px 0 #fff,
+      1px 1px 0 #fff,
+      0 4px 12px rgba(0,0,0,0.5);
   }
-  .subtitle{color:var(--subtle); font-size:12px}
-  .controls{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  .subtitle{color:var(--subtle); font-size:12px; margin-left:auto}
+  .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  .btn, .select, .field{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    border-radius:8px; padding:10px 14px; outline:none; font-size:14px;
   }
+  .field{flex:1; min-width:0}
+  .select{appearance:none; padding-right:30px}
+  .btn{cursor:pointer; font-weight:600; white-space:nowrap}
+  .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#03121d; border:0}
+  .btn.ghost{background:transparent}
+  .btn.danger{background:var(--danger); border-color:transparent; color:white}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
+
+  /* Toolbar */
   .seg{
     display:flex; background:var(--panel); border:1px solid var(--border);
-    border-radius:999px; overflow:hidden;
+    border-radius:8px; overflow:hidden;
   }
   .seg button{
     border:0; background:transparent; color:var(--subtle);
-    padding:8px 12px; cursor:pointer; font-weight:600;
+    padding:8px 14px; cursor:pointer; font-weight:600; font-size:14px;
   }
-  .seg button.active{background:var(--muted); color:var(--text)}
-  .field, .select, .btn{
-    border:1px solid var(--border); background:var(--panel); color:var(--text);
-    border-radius:999px; padding:8px 12px; outline:none;
-  }
-  .field{min-width:200px}
-  .select{appearance:none}
-  .btn{cursor:pointer; font-weight:700}
-  .btn.primary{background:linear-gradient(180deg,var(--brand),var(--brand-2)); color:#03121d; border:0}
-  .btn.ghost{background:transparent}
-  .btn.danger{background:var(--danger); border-color:transparent}
-  .btn:disabled{opacity:.6; cursor:not-allowed}
+  .seg button.active{background:var(--brand); color:#0b1020}
 
-  /* layout */
-  .row{display:flex; gap:16px; margin-top:16px; align-items:center; flex-wrap:wrap}
-  .toolbar{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:12px;
+  /* Swipe Container */
+  .swipe-container{
+    position:relative;
+    width:100%;
+    height:calc(100vh - 140px);
+    margin-top:140px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    overflow:hidden;
+  }
+
+  .swipe-stack{
+    position:relative;
+    width:100%;
+    max-width:400px;
+    height:100%;
+  }
+
+  .swipe-card{
+    position:relative;
+    width:100%;
+    height:100%;
+    border:2px solid var(--border);
+    background:linear-gradient(180deg, #0c162a, #0b1424);
+    border-radius:16px;
+    overflow:hidden;
     box-shadow:var(--shadow);
+    transition:opacity 0.3s ease;
   }
-  .chip{
-    display:inline-flex; align-items:center; gap:6px;
-    background:var(--chip-bg); color:var(--chip-txt);
-    border:1px solid #1f3550; border-radius:999px; padding:6px 10px; font-weight:600;
-  }
-  .chip .x{opacity:.8; cursor:pointer}
-  .chips{display:flex; gap:8px; flex-wrap:wrap}
 
-  /* grid */
+  /* Grid (for list view) */
   .grid{
-    margin-top:14px;
-    display:grid; gap:14px;
-    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    padding:16px; display:flex; flex-direction:column; gap:16px;
+    margin-top:140px; /* Space for fixed header */
   }
   .card{
     border:1px solid var(--border);
     background:linear-gradient(180deg, #0c162a, #0b1424);
-    border-radius:14px; overflow:hidden; box-shadow:var(--shadow);
-    display:flex; flex-direction:column; min-height:120px;
+    border-radius:12px; overflow:hidden; box-shadow:var(--shadow);
   }
   .media{
     position:relative; background:#081223; border-bottom:1px solid var(--border);
-    height:150px; display:flex; align-items:center; justify-content:center;
+    min-height:200px; display:flex; align-items:center; justify-content:center;
   }
-  .media img{
-    width:100%; height:100%; object-fit:cover; display:block;
+  .media img{width:100%; height:100%; object-fit:cover; display:block}
+
+  /* Swipe card specific - 50/50 split */
+  .swipe-card .media{
+    height:50%;
+    min-height:250px;
+    position:relative;
+    background:#081223;
   }
+
+  .swipe-card .media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .swipe-card .card-body{
+    height:50%;
+    display:flex;
+    flex-direction:column;
+    padding:16px;
+    padding-bottom:120px; /* Space for carousel indicators and action buttons */
+    overflow:hidden;
+  }
+
+  .swipe-card .desc{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.4;
+    margin:0 0 12px;
+    color:#dbeafe;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+  }
+
+  .swipe-card .rating-badge{
+    display:inline-block;
+    background:var(--accent);
+    color:#0f172a;
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+
+  /* Action buttons for swipe mode */
+  /* Navigation Arrows */
+  .nav-arrow{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.2);
+    background:rgba(11,18,38,0.8);
+    color:white;
+    font-size:32px;
+    line-height:1;
+    cursor:pointer;
+    z-index:10;
+    backdrop-filter:blur(10px);
+    transition:all 0.2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+
+  .nav-arrow:hover{
+    background:rgba(11,18,38,0.95);
+    border-color:rgba(255,255,255,0.4);
+    transform:translateY(-50%) scale(1.1);
+  }
+
+  .nav-arrow:active{transform:translateY(-50%) scale(0.95)}
+  .nav-arrow.left{left:10px}
+  .nav-arrow.right{right:10px}
+  .nav-arrow:disabled{opacity:0.3; cursor:not-allowed}
+
+  /* Carousel Indicators */
+  .carousel-indicators{
+    position:absolute;
+    bottom:100px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:8px;
+    z-index:15;
+    padding:8px 16px;
+    background:rgba(11,18,38,0.7);
+    border-radius:20px;
+    backdrop-filter:blur(10px);
+    max-width:90%;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+
+  .carousel-indicators::-webkit-scrollbar{display:none}
+
+  .carousel-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.4);
+    cursor:pointer;
+    transition:all 0.3s;
+    flex-shrink:0;
+  }
+
+  .carousel-dot.active{
+    background:var(--brand);
+    width:12px;
+    height:12px;
+    box-shadow:0 0 8px var(--brand);
+  }
+
+  .carousel-dot:not(.active):hover{
+    background:rgba(255,255,255,0.5);
+    transform:scale(1.2);
+  }
+
+  /* Action Buttons */
+  .swipe-actions{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:16px;
+    z-index:20;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  .action-btn{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    border:3px solid;
+    background:rgba(11,18,38,0.95);
+    color:white;
+    font-size:24px;
+    cursor:pointer;
+    transition:all 0.2s;
+    backdrop-filter:blur(10px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+
+  .action-btn:active{transform:scale(0.9)}
+
+  .action-btn.decline{
+    border-color:#ef4444;
+    color:#ef4444;
+    font-size:18px;
+    font-weight:700;
+    text-transform:lowercase;
+  }
+
+  .action-btn.edit{
+    border-color:var(--brand);
+    color:var(--brand);
+  }
+
   .media .badge{
-    position:absolute; top:8px; left:8px; font-size:11px; font-weight:700;
-    background:rgba(2,6,23,.8); border:1px solid var(--border);
-    color:var(--brand); padding:4px 8px; border-radius:999px;
+    position:absolute; top:20px; left:20px; font-size:12px; font-weight:700;
+    background:rgba(2,6,23,.95); border:1px solid var(--border);
+    color:var(--brand); padding:6px 10px; border-radius:8px;
+    z-index:3;
+    backdrop-filter:blur(10px);
+  }
+  .media .new-badge{
+    position:absolute; top:20px; right:20px; font-size:13px; font-weight:700;
+    background:rgba(245,158,11,0.95); border:1px solid #d97706;
+    color:#0f172a; padding:6px 12px; border-radius:8px;
+    animation: pulse 2s ease-in-out infinite;
+    z-index:3;
+    backdrop-filter:blur(10px);
+  }
+  .media .would-badge{
+    position:absolute; top:20px; left:20px; font-size:13px; font-weight:700;
+    background:rgba(34,197,94,0.95); border:1px solid #16a34a;
+    color:#fff; padding:6px 12px; border-radius:8px;
+    z-index:3;
+    backdrop-filter:blur(10px);
+    box-shadow:0 2px 8px rgba(34,197,94,0.3);
+  }
+  .media .did-badge{
+    position:absolute; top:60px; left:20px; font-size:14px; font-weight:700;
+    background:rgba(168,85,247,0.95); border:1px solid #a855f7;
+    color:#fff; padding:6px 12px; border-radius:8px;
+    z-index:3;
+    backdrop-filter:blur(10px);
+    box-shadow:0 2px 8px rgba(168,85,247,0.4);
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   .media .edit{
-    position:absolute; top:8px; right:8px;
-    background:rgba(2,6,23,.8); border:1px solid var(--border);
-    color:var(--text); padding:6px 10px; border-radius:999px; cursor:pointer;
+    position:absolute; bottom:8px; right:8px;
+    background:rgba(2,6,23,.9); border:1px solid var(--border);
+    color:var(--text); padding:8px 12px; border-radius:6px; cursor:pointer;
+    font-size:12px; font-weight:600;
   }
-  .card-body{padding:12px}
+  .card-body{padding:14px}
   .desc{
-    font-size:14px; font-weight:700; margin:0 0 8px; color:#dbeafe;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
-  }
-  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px}
-  .tag{
-    font-size:11px; background:#0b213a; color:#bfe0ff;
-    border:1px solid #163450; border-radius:999px; padding:4px 8px; font-weight:700;
+    font-size:15px; font-weight:600; margin:0 0 12px; color:#dbeafe; line-height:1.4;
   }
   .ratings{
     display:flex; justify-content:space-between; align-items:center; gap:8px;
-    border-top:1px dashed var(--border); padding:10px 12px; margin-top:auto;
+    border-top:1px dashed var(--border); padding:12px 14px; margin-top:auto;
   }
-  .stars{display:flex; gap:2px; cursor:pointer}
-  .stars .s{font-size:16px; color:#334155}
-  .stars .s.f{color:#fbbf24}
-  .peer{font-size:12px; color:var(--subtle)}
+  .stars, .stars-inline{display:flex; gap:6px; cursor:pointer}
+  .stars .s, .stars-inline .s{
+    font-size:24px;
+    cursor:pointer;
+    transition:transform 0.2s ease;
+    user-select:none;
+  }
+  .stars .s:hover, .stars-inline .s:hover{transform:scale(1.2)}
+  .rating-section{
+    margin:12px 0;
+    padding:12px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+  .peer{font-size:13px; color:var(--subtle); font-weight:600}
+
+  /* Row actions */
   .row-actions{
-    display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border);
+    display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--border);
+    flex-wrap:wrap;
   }
-  .row-actions .btn{border-radius:8px}
+  .row-actions .btn{border-radius:6px; flex:1; min-width:0; padding:10px}
 
   .empty{
-    border:1px dashed var(--border); border-radius:var(--radius);
-    padding:36px; text-align:center; color:var(--subtle); margin-top:14px;
+    padding:40px 20px; text-align:center; color:var(--subtle);
   }
 
-  /* modal (simple sheet) */
+  /* Modal/Dialog */
   dialog{
-    border:none; border-radius:16px; padding:0; width:min(720px, calc(100% - 24px));
-    background:linear-gradient(180deg, #0c162a, #0b1424);
-    color:var(--text); box-shadow:0 30px 80px rgba(0,0,0,.6); border:1px solid var(--border);
+    border:none; border-radius:0; padding:0; width:100%; max-width:100%; height:100vh; max-height:100vh;
+    background:var(--bg); color:var(--text); margin:0; position:fixed; inset:0;
   }
-  .sheet{
-    display:flex; flex-direction:column; gap:0;
+  dialog::backdrop{background:rgba(0,0,0,.8)}
+  .sheet{display:flex; flex-direction:column; height:100%; overflow:hidden}
+  .sheet .content{padding:20px 20px 0; overflow-y:auto; flex:1}
+  .f{display:flex; flex-direction:column; gap:16px}
+  .f label{font-size:13px; color:var(--subtle); font-weight:600; margin-bottom:6px; display:block}
+  .f input[type="text"], .f input[type="url"], .f input[type="file"], .f textarea{
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    border-radius:8px; padding:12px; outline:none; font-size:16px; width:100%;
   }
-  .sheet header{
-    position:sticky; inset:0; box-shadow:none; border-radius:16px 16px 0 0;
-    top:0; margin:0; padding:14px 16px; background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.25));
-  }
-  .sheet .content{padding:16px}
-  .f{display:flex; flex-direction:column; gap:10px}
-  .f .g{display:grid; gap:10px; grid-template-columns:1fr 1fr}
-  .f label{font-size:12px; color:var(--subtle)}
-  .f input[type="text"], .f input[type="url"], .f textarea{
-    border:1px solid var(--border); background:#0a1427; color:var(--text);
-    border-radius:10px; padding:10px 12px; outline:none;
-  }
-  textarea{min-height:90px; resize:vertical}
+  .f textarea{min-height:100px; resize:vertical; font-family:inherit}
+  .f input[type="checkbox"]{width:20px; height:20px; cursor:pointer}
+  .f input[type="file"]{padding:10px}
   .sheet .footer{
-    display:flex; gap:10px; justify-content:flex-end; padding:12px 16px;
-    border-top:1px solid var(--border); background:rgba(0,0,0,.25); border-radius:0 0 16px 16px;
+    display:flex; gap:10px; padding:16px;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--border); background:var(--panel);
   }
 
-  /* utility */
+  .view-mode-toggle{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+
+  .view-mode-toggle button{
+    border:0;
+    background:transparent;
+    color:var(--subtle);
+    padding:8px 14px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+  }
+
+  .view-mode-toggle button.active{
+    background:var(--brand);
+    color:#0b1020;
+  }
+
+  /* Notifications */
+  .notification{
+    position:fixed; top:160px; left:16px; right:16px; z-index:1000;
+    background:linear-gradient(180deg, #1a2c4a, #0f1d35);
+    border:1px solid var(--brand); border-radius:12px;
+    padding:16px; box-shadow:0 8px 32px rgba(0,0,0,.8);
+    animation:slideDown 0.3s ease-out;
+  }
+  @keyframes slideDown {
+    from { transform:translateY(-100px); opacity:0; }
+    to { transform:translateY(0); opacity:1; }
+  }
+  .notification.exit{animation:slideUp 0.3s ease-in forwards}
+  @keyframes slideUp {
+    from { transform:translateY(0); opacity:1; }
+    to { transform:translateY(-100px); opacity:0; }
+  }
+  .notification-title{font-weight:700; color:var(--brand); margin-bottom:6px; font-size:15px}
+  .notification-body{font-size:14px; color:var(--text)}
+
+  /* Utility */
   .hidden{display:none !important}
   .grow{flex:1}
-  
-  @media (max-width: 768px) {
-    header{flex-direction:column; align-items:stretch}
-    .controls{flex-direction:column}
-    .field{min-width:100%}
-    .f .g{grid-template-columns:1fr}
-  }
 </style>
 </head>
 <body>
-<div class="app">
-  <header aria-label="Top bar">
-    <div class="title">
-      <h1>What if we…</h1>
-      <span class="subtitle">Plan, rate, and pick ideas together.</span>
-    </div>
-    <div class="controls">
-      <div class="seg" role="tablist" aria-label="Active person">
-        <button class="active" id="u1" onclick="ui.setUser('person1')" role="tab" aria-selected="true">Partner 1</button>
-        <button id="u2" onclick="ui.setUser('person2')" role="tab" aria-selected="false">Partner 2</button>
-      </div>
-      <input class="field" id="q" placeholder="Search description or tags…" oninput="ui.render()" aria-label="Search">
-      <select class="select" id="sort" onchange="ui.render()" aria-label="Sort">
-        <option value="date_desc">Newest</option>
-        <option value="date_asc">Oldest</option>
-        <option value="my_rating_desc">My rating ↓</option>
-        <option value="my_rating_asc">My rating ↑</option>
-        <option value="avg_desc">Avg rating ↓</option>
-        <option value="avg_asc">Avg rating ↑</option>
-      </select>
-      <button class="btn ghost" onclick="io.importJson()">Import</button>
-      <button class="btn ghost" onclick="io.exportJson()">Export</button>
-      <button class="btn primary" onclick="ui.openForm()">Add idea</button>
-    </div>
-  </header>
-
-  <div class="toolbar">
-    <div class="chips" id="activeTags"></div>
-    <div class="grow"></div>
-    <button class="btn ghost" onclick="filters.clear()">Clear filters</button>
-  </div>
-
-  <div class="grid" id="grid"></div>
-  <div class="empty hidden" id="emptyState">
-    No ideas match your filters yet. Add one or adjust search/sort.
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen hidden">
+  <h1>What if we…</h1>
+  <p>Choose your profile to continue</p>
+  <div class="login-buttons">
+    <button class="login-btn" onclick="auth.login('person1')">Laura</button>
+    <button class="login-btn" onclick="auth.login('person2')">Boden</button>
   </div>
 </div>
 
-<!-- Add/Edit sheet -->
+<!-- Main App -->
+<div id="mainApp" class="app hidden">
+  <header>
+    <div class="title">
+      <h1>What if we…</h1>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
+        <button class="btn ghost" onclick="auth.logout()">Switch User</button>
+      </div>
+    </div>
+    <div class="settings-panel hidden" id="settingsPanel">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Mode</label>
+          <div class="view-mode-toggle">
+            <button class="active" id="modeSwipe" onclick="ui.setMode('swipe')">💫 Swipe</button>
+            <button id="modeList" onclick="ui.setMode('list')">📋 List</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">View</label>
+          <div class="seg">
+            <button class="active" id="viewAll" onclick="ui.setView('all')">All Ideas</button>
+            <button id="viewDeclined" onclick="ui.setView('declined')">Declined</button>
+            <button id="viewWould" onclick="ui.setView('would')">Would ✅</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Theme</label>
+          <div class="seg">
+            <button class="active" id="themeBlue" onclick="theme.set('blue')">💙 Blue</button>
+            <button id="themePink" onclick="theme.set('pink')">💕 Pink</button>
+          </div>
+        </div>
+        <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
+        <select class="select" id="sort" onchange="ui.renderCurrent()">
+          <option value="date_desc">Newest</option>
+          <option value="date_asc">Oldest</option>
+          <option value="my_rating_desc">My rating ↓</option>
+          <option value="my_rating_asc">My rating ↑</option>
+          <option value="avg_desc">Avg rating ↓</option>
+          <option value="avg_asc">Avg rating ↑</option>
+        </select>
+        <button class="btn primary" onclick="ui.openForm()" style="width:100%">+ Add New Idea</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Swipe Mode -->
+  <div class="swipe-container" id="swipeContainer">
+    <div class="swipe-stack" id="swipeStack"></div>
+
+    <!-- Navigation Arrows -->
+    <button class="nav-arrow left" id="navPrev" onclick="carousel.prev()">‹</button>
+    <button class="nav-arrow right" id="navNext" onclick="carousel.next()">›</button>
+
+    <!-- Carousel Indicators -->
+    <div class="carousel-indicators" id="carouselIndicators"></div>
+
+    <!-- Action Buttons -->
+    <div class="swipe-actions">
+      <button class="action-btn decline" onclick="carousel.decline()" title="Decline this idea">no.</button>
+      <button class="action-btn edit" onclick="carousel.edit()" title="View details">👁</button>
+    </div>
+  </div>
+
+  <!-- List Mode -->
+  <div class="grid hidden" id="grid"></div>
+  <div class="empty hidden" id="emptyState">
+    No ideas yet. Tap "+ Add" to create one!
+  </div>
+</div>
+
+<!-- Notifications -->
+<div id="notifications"></div>
+
+<!-- Edit Dialog -->
 <dialog id="sheet">
   <div class="sheet">
-    <header>
-      <div style="display:flex; align-items:center; gap:10px; width:100%">
-        <strong id="sheetTitle">Add idea</strong>
-        <div class="grow"></div>
-        <button class="btn ghost" onclick="ui.closeForm()">Close</button>
-      </div>
-    </header>
     <div class="content">
       <form class="f" id="form" onsubmit="formHandlers.save(event)">
         <input type="hidden" id="id">
-        <div class="g">
-          <div>
-            <label for="desc">What's the idea? <span style="color:var(--accent)">*</span></label>
-            <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
-          </div>
-          <div>
-            <label for="tags">Tags (comma separated)</label>
-            <input type="text" id="tags" placeholder="outdoors, food, quick, rainy-day">
+        <div>
+          <label for="desc">What's the idea?</label>
+          <textarea id="desc" required placeholder="e.g. Take a pottery class, sunset hike, board-game café…"></textarea>
+        </div>
+        <div>
+          <label for="imageFile">Upload Image 📸</label>
+          <input type="file" id="imageFile" accept="image/*" onchange="uploadHandlers.handleImageUpload(event)">
+          <div id="imagePreview" class="hidden" style="margin-top:10px">
+            <img id="imagePreviewImg" style="max-width:100%; border-radius:8px; border:1px solid var(--border)">
           </div>
         </div>
-        <div class="g">
-          <div>
-            <label for="video">Video URL (YouTube supported)</label>
-            <input type="url" id="video" placeholder="https://youtu.be/… or https://youtube.com/watch?v=…">
-          </div>
-          <div>
-            <label for="image">Image URL (optional)</label>
-            <input type="url" id="image" placeholder="https://…/photo.jpg or png/webp">
-          </div>
+        <div>
+          <label for="video">Video URL (optional)</label>
+          <input type="url" id="video" placeholder="https://youtu.be/…">
         </div>
-        <div class="g">
-          <div>
-            <label>Your initial rating</label>
-            <div class="stars" id="myStars" aria-label="Your rating"></div>
-          </div>
-          <div>
-            <label>Partner's initial rating</label>
-            <div class="stars" id="theirStars" aria-label="Partner rating"></div>
-          </div>
+        <div>
+          <label>Your rating</label>
+          <div class="stars" id="myStars"></div>
+        </div>
+        <div id="partnerRatingSection" class="hidden" style="margin-top:-8px; margin-bottom:12px; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:13px; color:var(--subtle);">
+          <span id="partnerRatingDisplay"></span>
+        </div>
+        <div>
+          <label for="notes">Notes (visible to both)</label>
+          <textarea id="notes" placeholder="Planning details, location, cost, etc."></textarea>
+        </div>
+        <div>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer">
+            <input type="checkbox" id="completed">
+            <span>✅ We did this!</span>
+          </label>
         </div>
       </form>
-      <div style="margin-top:8px; font-size:12px; color:var(--subtle)">
-        Thumbnails: If you enter a YouTube link, the thumbnail is fetched automatically. If you provide an image URL, that's used. Otherwise the tile becomes text-only.
-      </div>
     </div>
     <div class="footer">
       <button class="btn danger hidden" id="delBtn" onclick="formHandlers.del()">Delete</button>
+      <button class="btn primary hidden" id="restoreBtn" onclick="formHandlers.restore()">↺ Restore</button>
+      <button class="btn ghost" onclick="ui.closeForm()">Cancel</button>
       <div class="grow"></div>
-      <button class="btn" onclick="ui.closeForm()">Cancel</button>
       <button class="btn primary" form="form">Save</button>
     </div>
   </div>
@@ -333,17 +676,171 @@ const api = {
 };
 
 const state = {
-  user:'person1',
+  user: null,
   ideas: [],
   query:'',
   sort:'date_desc',
-  tagFilters:new Set(),
+  view: 'all',
+  mode: 'swipe', // 'swipe' or 'list'
+  currentImageData: null, // Base64 image data from upload
+  lastSeenIdeas: JSON.parse(localStorage.getItem('lastSeenIdeas') || '[]'),
+  currentIndex: 0 // Current card index in carousel
+};
+
+/* ---------- Theme System ---------- */
+const theme = {
+  current: localStorage.getItem('theme') || 'blue',
+
+  themes: {
+    blue: {
+      '--bg': '#020617',
+      '--panel': '#0f172a',
+      '--muted': '#1e293b',
+      '--border': '#334155',
+      '--text': '#cbd5e1',
+      '--subtle': '#94a3b8',
+      '--brand': '#60a5fa'
+    },
+    pink: {
+      '--bg': '#1a0d1f',
+      '--panel': '#2d1b3d',
+      '--muted': '#3d2648',
+      '--border': '#553c64',
+      '--text': '#e9d5ff',
+      '--subtle': '#c084fc',
+      '--brand': '#d946ef'
+    }
+  },
+
+  init() {
+    this.apply(this.current);
+  },
+
+  set(name) {
+    if (!this.themes[name]) return;
+    this.current = name;
+    localStorage.setItem('theme', name);
+    this.apply(name);
+
+    // Update button states
+    document.getElementById('themeBlue').classList.toggle('active', name === 'blue');
+    document.getElementById('themePink').classList.toggle('active', name === 'pink');
+  },
+
+  apply(name) {
+    const colors = this.themes[name];
+    if (!colors) return;
+
+    const root = document.documentElement;
+    Object.entries(colors).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+  }
+};
+
+/* ---------- Authentication ---------- */
+const auth = {
+  login(user) {
+    state.user = user;
+    localStorage.setItem('loggedInUser', user);
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+
+    loadIdeas().then(() => {
+      if (state.mode === 'swipe') {
+        ui.renderSwipe();
+      } else {
+        ui.render();
+      }
+    });
+  },
+  logout() {
+    state.user = null;
+    localStorage.removeItem('loggedInUser');
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  },
+  checkLogin() {
+    // Always show login screen on refresh
+    localStorage.removeItem('loggedInUser');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
 };
 
 /* ---------- Utilities ---------- */
-const users = {person1:'Partner 1', person2:'Partner 2'};
+const users = {person1:'Laura', person2:'Boden'};
 
 function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
+
+/* ---------- Image Upload ---------- */
+const uploadHandlers = {
+  handleImageUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image too large! Please choose an image under 5MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      state.currentImageData = e.target.result;
+
+      // Show preview
+      const preview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('imagePreviewImg');
+      previewImg.src = e.target.result;
+      preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+/* ---------- Notifications ---------- */
+const notifications = {
+  show(title, body, duration = 5000) {
+    const container = document.getElementById('notifications');
+    const notif = document.createElement('div');
+    notif.className = 'notification';
+    notif.innerHTML = `
+      <div class="notification-title">${esc(title)}</div>
+      <div class="notification-body">${esc(body)}</div>
+    `;
+    container.appendChild(notif);
+
+    setTimeout(() => {
+      notif.classList.add('exit');
+      setTimeout(() => notif.remove(), 300);
+    }, duration);
+  },
+
+  checkNewIdeas(ideas) {
+    const otherUser = state.user === 'person1' ? 'person2' : 'person1';
+    const newIdeas = ideas.filter(idea =>
+      idea.createdBy === otherUser &&
+      !state.lastSeenIdeas.includes(idea.id)
+    );
+
+    if (newIdeas.length > 0) {
+      newIdeas.forEach(idea => {
+        this.show('🎉 New Idea!', `${users[otherUser]} added: "${idea.description.slice(0, 50)}..."`, 6000);
+      });
+    }
+
+    // Update last seen
+    state.lastSeenIdeas = ideas.map(i => i.id);
+    localStorage.setItem('lastSeenIdeas', JSON.stringify(state.lastSeenIdeas));
+  },
+
+  checkMutual5Stars(idea) {
+    if (idea.ratings.person1 === 5 && idea.ratings.person2 === 5) {
+      this.show('⭐ Mutual 5 Stars!', `Both of you LOVE: "${idea.description}"`, 7000);
+    }
+  }
+};
 
 function ytId(url){
   try{
@@ -361,32 +858,119 @@ function getThumb(idea){
   return '';
 }
 function esc(s){ const d=document.createElement('div'); d.textContent=String(s??''); return d.innerHTML; }
-function toTags(s){
-  return (s||'')
-    .split(',')
-    .map(t=>t.trim())
-    .filter(Boolean)
-    .slice(0,20);
-}
+
+/* ---------- Carousel Navigation ---------- */
+const carousel = {
+  filteredIdeas: [],
+
+  init() {
+    // Initialize carousel
+    this.updateFiltered();
+  },
+
+  updateFiltered() {
+    // Get filtered ideas for current view
+    this.filteredIdeas = filters.apply(state.ideas);
+
+    // Reset index if out of bounds
+    if (state.currentIndex >= this.filteredIdeas.length) {
+      state.currentIndex = Math.max(0, this.filteredIdeas.length - 1);
+    }
+  },
+
+  prev() {
+    if (this.filteredIdeas.length === 0) return;
+    state.currentIndex = (state.currentIndex - 1 + this.filteredIdeas.length) % this.filteredIdeas.length;
+    ui.renderSwipe();
+  },
+
+  next() {
+    if (this.filteredIdeas.length === 0) return;
+    state.currentIndex = (state.currentIndex + 1) % this.filteredIdeas.length;
+    ui.renderSwipe();
+  },
+
+  goTo(index) {
+    if (index < 0 || index >= this.filteredIdeas.length) return;
+    state.currentIndex = index;
+    ui.renderSwipe();
+  },
+
+  async decline() {
+    const idea = this.filteredIdeas[state.currentIndex];
+    if (!idea) return;
+
+    // Add user to declinedBy array
+    const declinedBy = idea.declinedBy || [];
+    if (!declinedBy.includes(state.user)) {
+      declinedBy.push(state.user);
+    }
+
+    await api.updateIdea(idea.id, { declinedBy });
+    await loadIdeas();
+
+    // Move to next idea
+    this.next();
+  },
+
+  edit() {
+    const idea = this.filteredIdeas[state.currentIndex];
+    if (!idea) return;
+    ui.openForm(idea.id);
+  },
+
+  async restore(ideaId) {
+    // Remove user from declinedBy array to restore to All Ideas
+    const idea = state.ideas.find(i => i.id === ideaId);
+    if (!idea) return;
+
+    const declinedBy = (idea.declinedBy || []).filter(u => u !== state.user);
+    await api.updateIdea(ideaId, { declinedBy });
+    await loadIdeas();
+
+    notifications.show('Restored!', 'Idea moved back to All Ideas');
+  }
+};
 
 /* ---------- Filters & sorting ---------- */
 const filters = {
   clear(){
     state.query=''; document.getElementById('q').value='';
-    state.tagFilters.clear(); ui.render();
+    ui.render();
   },
   apply(arr){
     let out = arr;
+
+    // Filter by view
+    if (state.view === 'would') {
+      // Would = both partners rated 3+ hearts
+      out = out.filter(i => {
+        const rating1 = i.ratings?.person1 || 0;
+        const rating2 = i.ratings?.person2 || 0;
+        return rating1 >= 3 && rating2 >= 3;
+      });
+    } else if (state.view === 'declined') {
+      // Declined = explicitly declined by current user
+      out = out.filter(i => {
+        const declinedBy = i.declinedBy || [];
+        return declinedBy.includes(state.user);
+      });
+    } else {
+      // All = not declined by current user
+      out = out.filter(i => {
+        const declinedBy = i.declinedBy || [];
+        return !declinedBy.includes(state.user);
+      });
+    }
+
     const q = state.query.trim().toLowerCase();
     if (q){
       out = out.filter(i=>{
-        const hay = (i.description+' '+(i.tags||[]).join(' ')).toLowerCase();
+        const hay = (i.description+' '+(i.notes||'')).toLowerCase();
         return hay.includes(q);
       });
     }
-    if (state.tagFilters.size){
-      out = out.filter(i => (i.tags||[]).some(t => state.tagFilters.has(t)));
-    }
+
     const sort = state.sort;
     out = out.slice().sort((a,b)=>{
       switch(sort){
@@ -405,61 +989,146 @@ const filters = {
 
 /* ---------- UI ---------- */
 const ui = {
-  setUser(u){
-    state.user=u;
-    document.getElementById('u1').classList.toggle('active', u==='person1');
-    document.getElementById('u2').classList.toggle('active', u==='person2');
-    ui.render();
+  toggleSettings(){
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('hidden');
+  },
+  renderCurrent(){
+    if (state.mode === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
+  },
+  setMode(m){
+    state.mode = m;
+    document.getElementById('modeSwipe').classList.toggle('active', m==='swipe');
+    document.getElementById('modeList').classList.toggle('active', m==='list');
+
+    document.getElementById('swipeContainer').classList.toggle('hidden', m!=='swipe');
+    document.getElementById('grid').classList.toggle('hidden', m!=='list');
+
+    if (m === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
+  },
+  setView(v){
+    state.view = v;
+    document.getElementById('viewAll').classList.toggle('active', v==='all');
+    document.getElementById('viewDeclined').classList.toggle('active', v==='declined');
+    document.getElementById('viewWould').classList.toggle('active', v==='would');
+
+    if (state.mode === 'swipe') {
+      this.renderSwipe();
+    } else {
+      this.render();
+    }
   },
   openForm(id){
     const d = document.getElementById('sheet');
     const isEdit = !!id;
     const idea = isEdit ? state.ideas.find(i=>i.id===id) : null;
 
-    document.getElementById('sheetTitle').textContent = isEdit ? 'Edit idea' : 'Add idea';
     document.getElementById('delBtn').classList.toggle('hidden', !isEdit);
+
+    // Show restore button only for declined ideas
+    const isDeclined = idea && (idea.declinedBy || []).includes(state.user);
+    document.getElementById('restoreBtn').classList.toggle('hidden', !isDeclined);
+
     document.getElementById('id').value = idea?.id || '';
     document.getElementById('desc').value = idea?.description || '';
     document.getElementById('video').value = idea?.videoUrl || '';
-    document.getElementById('image').value = idea?.imageUrl || '';
-    document.getElementById('tags').value = (idea?.tags||[]).join(', ');
+    document.getElementById('notes').value = idea?.notes || '';
+    document.getElementById('completed').checked = idea?.completed || false;
+
+    // Handle image preview
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = document.getElementById('imagePreviewImg');
+    const imageFileInput = document.getElementById('imageFile');
+
+    if (idea?.imageUrl) {
+      imagePreviewImg.src = idea.imageUrl;
+      imagePreview.classList.remove('hidden');
+    } else {
+      imagePreview.classList.add('hidden');
+    }
+    imageFileInput.value = '';
+    state.currentImageData = null;
 
     stars.render('myStars', idea?.ratings?.[state.user] ?? 0, n=>stars.tmp.my=n);
-    const other = state.user==='person1'?'person2':'person1';
-    stars.render('theirStars', idea?.ratings?.[other] ?? 0, n=>stars.tmp.their=n);
-
     stars.tmp.my = idea?.ratings?.[state.user] ?? 0;
-    stars.tmp.their = idea?.ratings?.[other] ?? 0;
+
+    // Show partner rating if they rated 3+
+    if (idea) {
+      const otherUser = state.user==='person1'?'person2':'person1';
+      const theirRating = idea.ratings?.[otherUser] || 0;
+      const partnerSection = document.getElementById('partnerRatingSection');
+      const partnerDisplay = document.getElementById('partnerRatingDisplay');
+
+      if (theirRating >= 3) {
+        partnerDisplay.innerHTML = `<strong>${users[otherUser]}</strong>: ${'💖'.repeat(theirRating)}${'🤍'.repeat(5-theirRating)}`;
+        partnerSection.classList.remove('hidden');
+      } else {
+        partnerSection.classList.add('hidden');
+      }
+    } else {
+      document.getElementById('partnerRatingSection').classList.add('hidden');
+    }
 
     d.showModal();
   },
-  closeForm(){ document.getElementById('sheet').close(); },
-  addTagFilter(tag){
-    state.tagFilters.add(tag);
-    this.render();
+  closeForm(){
+    document.getElementById('sheet').close();
+    state.currentImageData = null;
   },
-  removeTagFilter(tag){
-    state.tagFilters.delete(tag);
-    this.render();
+  renderSwipe(){
+    const stack = document.getElementById('swipeStack');
+    carousel.updateFiltered();
+    const list = carousel.filteredIdeas;
+
+    if (list.length === 0) {
+      let message = 'No ideas yet!';
+      if (state.view === 'declined') {
+        message = 'No declined ideas.<br><br>Tap ✕ to decline ideas.';
+      } else if (state.view === 'would') {
+        message = 'No mutual favorites yet!<br><br>Both partners need to rate an idea 3+ hearts 💖';
+      }
+      stack.innerHTML = `<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">${message}</div>`;
+      document.getElementById('carouselIndicators').innerHTML = '';
+      return;
+    }
+
+    // Render only current card
+    const currentIdea = list[state.currentIndex];
+    stack.innerHTML = this.swipeCard(currentIdea);
+
+    // Render carousel indicators
+    this.renderCarouselIndicators(list.length);
+  },
+
+  renderCarouselIndicators(total){
+    const container = document.getElementById('carouselIndicators');
+    if (!container) return;
+
+    const html = Array.from({length: total}, (_, i) => {
+      const isActive = i === state.currentIndex;
+      return `<div class="carousel-dot ${isActive ? 'active' : ''}" onclick="carousel.goTo(${i})" title="${i+1} of ${total}"></div>`;
+    }).join('');
+    container.innerHTML = html;
   },
   render(){
     state.query = document.getElementById('q').value || '';
     state.sort  = document.getElementById('sort').value;
 
-    // Active tags at top
-    const tbar = document.getElementById('activeTags');
-    tbar.innerHTML = [...state.tagFilters].map(t =>
-      `<span class="chip">${esc(t)} <span class="x" onclick="ui.removeTagFilter('${esc(t)}')">×</span></span>`
-    ).join('');
-
-    // Grid
     const grid = document.getElementById('grid');
     const list = filters.apply(state.ideas);
     document.getElementById('emptyState').classList.toggle('hidden', list.length>0);
 
     grid.innerHTML = list.map(idea => ui.card(idea)).join('');
 
-    // wire up image error fallback to text-only
+    // Wire up image error fallback
     grid.querySelectorAll('img[data-id]').forEach(img=>{
       img.onerror = () => {
         const card = img.closest('.card');
@@ -469,41 +1138,131 @@ const ui = {
       }
     });
   },
+  swipeCard(idea){
+    const thumb = getThumb(idea);
+    const otherUser = state.user==='person1'?'person2':'person1';
+    const myRating = idea.ratings?.[state.user] || 0;
+    const theirRating = idea.ratings?.[otherUser] || 0;
+    const isUnrated = myRating === 0;
+
+    // Check if this is a "Would" item (both rated 3+)
+    const isWould = myRating >= 3 && theirRating >= 3;
+
+    // Show partner's rating if they rated 3+
+    const showPartnerRating = theirRating >= 3;
+    const partnerRatingHtml = showPartnerRating ? `
+      <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:12px; color:var(--subtle);">
+        <strong>${users[otherUser]}</strong>: ${'💖'.repeat(theirRating)}${'🤍'.repeat(5-theirRating)}
+      </div>
+    ` : '';
+
+    const wouldBadge = isWould ? `<span class="would-badge">Would ✅</span>` : '';
+    const didBadge = idea.completed ? `<span class="did-badge">DID! 🎉</span>` : '';
+
+    const media = thumb ? `
+      <div class="media">
+        <img src="${esc(thumb)}" alt="" />
+        ${wouldBadge}
+        ${didBadge}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
+      </div>` : `
+      <div class="media" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #0f2238, #1a3a52)">
+        ${wouldBadge}
+        ${didBadge}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
+        <div style="font-size:48px; opacity:0.3">💭</div>
+      </div>`;
+
+    // Create inline rating function
+    const rateHandler = `async (n) => { await rate('${idea.id}', '${state.user}', n); }`;
+    const starsHtml = stars.inline(myRating, rateHandler);
+
+    // Show restore button for declined ideas
+    const declinedBy = idea.declinedBy || [];
+    const isDeclined = declinedBy.includes(state.user);
+    const restoreButtonHtml = isDeclined ? `
+      <button class="btn primary" onclick="event.stopPropagation(); carousel.restore('${idea.id}')" style="margin-top:12px; width:100%;">
+        ↺ Restore to All Ideas
+      </button>
+    ` : '';
+
+    return `
+      <div class="swipe-card" data-id="${idea.id}">
+        ${media}
+        <div class="card-body">
+          <p class="desc">${esc(idea.description)}</p>
+          <div class="rating-section">
+            <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Rate this idea</label>
+            <div class="stars-inline">${starsHtml}</div>
+            ${partnerRatingHtml}
+            ${restoreButtonHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  },
   card(idea){
     const thumb = getThumb(idea);
-    const tags = (idea.tags||[]).slice(0,6);
     const my = idea.ratings?.[state.user] || 0;
     const otherUser = state.user==='person1'?'person2':'person1';
     const their = idea.ratings?.[otherUser] || 0;
+    const isUnrated = my === 0;
+
+    // Show partner's rating only if THEY rated it 3 or higher
+    const showPartnerRating = their >= 3;
+    const partnerRatingDisplay = showPartnerRating
+      ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
+      : `${users[otherUser]}: Hidden`;
+
+    // Check if this is a "Would" item (both rated 3+)
+    const isWould = my >= 3 && their >= 3;
+    const wouldBadge = isWould ? `<span class="would-badge">Would ✅</span>` : '';
+    const didBadge = idea.completed ? `<span class="did-badge">DID! 🎉</span>` : '';
 
     const media = thumb ? `
       <div class="media">
         <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
+        ${wouldBadge}
+        ${didBadge}
         ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
         <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-      </div>` : '';
+      </div>` : `
+      <div class="media">
+        ${wouldBadge}
+        ${didBadge}
+        ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+      </div>`;
+
+    // Buttons for declined view
+    const actionButtons = state.view === 'declined' ? `
+      <div class="row-actions">
+        <button class="btn primary" onclick="event.stopPropagation(); formHandlers.restore('${idea.id}')">Restore to All Ideas</button>
+        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
+      </div>
+    ` : `
+      <div class="row-actions">
+        <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
+        <div class="grow"></div>
+        ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
+      </div>
+    `;
 
     return `
       <article class="card" onclick="ui.openDetail('${idea.id}')">
         ${media}
         <div class="card-body">
           <p class="desc">${esc(idea.description)}</p>
-          <div class="tags">
-            ${tags.map(t => `<span class="tag" onclick="event.stopPropagation(); ui.addTagFilter('${esc(t)}')">#${esc(t)}</span>`).join('')}
-          </div>
         </div>
         <div class="ratings">
           <div class="stars" onclick="event.stopPropagation();">
             ${stars.inline(my, n=>rate(idea.id, state.user, n))}
           </div>
-          <div class="peer">${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}</div>
+          <div class="peer">${partnerRatingDisplay}</div>
         </div>
-        <div class="row-actions">
-          <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-          <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
-          <div class="grow"></div>
-          ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Open video</a>` : ''}
-        </div>
+        ${actionButtons}
       </article>
     `;
   },
@@ -512,7 +1271,7 @@ const ui = {
   }
 };
 
-/* ---------- Stars ---------- */
+/* ---------- Hearts ---------- */
 const stars = {
   tmp:{my:0,their:0},
   render(hostId, value, onSet){
@@ -521,7 +1280,7 @@ const stars = {
     for(let i=1;i<=5;i++){
       const el = document.createElement('span');
       el.className = 's'+(i<=value?' f':'');
-      el.textContent = '★';
+      el.textContent = i<=value ? '💖' : '🤍';
       el.title = String(i);
       el.style.userSelect='none';
       el.onclick = ()=>{ onSet(i); host.querySelectorAll('.s').forEach((n,ix)=>n.classList.toggle('f', ix < i)); };
@@ -531,7 +1290,8 @@ const stars = {
   inline(value, onSet){
     let html = '';
     for(let i=1;i<=5;i++){
-      html += `<span class="s ${i<=value?'f':''}" onclick="(${onSet})( ${i} )">★</span>`;
+      const icon = i<=value ? '💖' : '🤍';
+      html += `<span class="s ${i<=value?'f':''}" onclick="(${onSet})(${i})">${icon}</span>`;
     }
     return html;
   }
@@ -544,38 +1304,62 @@ const formHandlers = {
     const id    = document.getElementById('id').value.trim();
     const desc  = document.getElementById('desc').value.trim();
     const video = document.getElementById('video').value.trim();
-    const image = document.getElementById('image').value.trim();
-    const tags  = toTags(document.getElementById('tags').value);
+    const notes = document.getElementById('notes').value.trim();
+    const completed = document.getElementById('completed').checked;
+
+    // Use uploaded image if available, otherwise keep existing
+    let imageUrl = '';
+    if (state.currentImageData) {
+      imageUrl = state.currentImageData; // Base64 image
+    } else if (id) {
+      const existingIdea = state.ideas.find(i => i.id === id);
+      imageUrl = existingIdea?.imageUrl || '';
+    }
 
     if (!desc){ alert('Please enter a description.'); return; }
 
-    const other = state.user==='person1'?'person2':'person1';
-    const myR   = stars.tmp.my|0;
-    const theirR= stars.tmp.their|0;
+    const myR = stars.tmp.my|0;
 
     if (id){
-      // edit
+      // edit - only update the content and current user's rating
+      const idea = state.ideas.find(i => i.id === id);
+      const oldRating = idea.ratings[state.user];
       await api.updateIdea(id, {
         description: desc,
         videoUrl: video,
-        imageUrl: image,
-        tags,
-        ratings: { [state.user]: myR, [other]: theirR }
+        imageUrl: imageUrl,
+        notes,
+        completed,
+        ratings: { ...idea.ratings, [state.user]: myR }
       });
+
+      // Check for mutual 5 stars
+      if (myR === 5 && oldRating !== 5) {
+        const updatedIdea = { ...idea, ratings: { ...idea.ratings, [state.user]: myR } };
+        notifications.checkMutual5Stars(updatedIdea);
+      }
     } else {
-      // add
+      // add - only set the creator's rating
       await api.addIdea({
         description: desc,
         videoUrl: video,
-        imageUrl: image,
-        tags,
-        ratings: { person1: state.user==='person1'?myR:theirR, person2: state.user==='person2'?myR:theirR }
+        imageUrl: imageUrl,
+        notes,
+        completed: false,
+        ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
+        createdBy: state.user,
+        comments: []
       });
     }
-    
+
     await loadIdeas();
     ui.closeForm();
-    ui.render();
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   },
   async del(idOpt){
     const id = idOpt || document.getElementById('id').value;
@@ -584,17 +1368,59 @@ const formHandlers = {
     
     await api.deleteIdea(id);
     await loadIdeas();
-    
+
     try{ document.getElementById('sheet').close(); }catch(_){}
-    ui.render();
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
+  },
+  async restore(ideaId) {
+    // Restore a declined idea by removing user from declinedBy array
+    const id = ideaId || document.getElementById('id').value;
+    if (!id) return;
+
+    const idea = state.ideas.find(i => i.id === id);
+    if (!idea) return;
+
+    const declinedBy = (idea.declinedBy || []).filter(u => u !== state.user);
+    await api.updateIdea(id, { declinedBy });
+    await loadIdeas();
+
+    try{ document.getElementById('sheet').close(); }catch(_){}
+
+    notifications.show('Restored!', 'Idea moved back to All Ideas');
+
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   }
 };
 
 /* ---------- Rating from cards ---------- */
 async function rate(id, who, n){
+  const idea = state.ideas.find(i => i.id === id);
+  const oldRating = idea?.ratings[who];
+
   await api.rateIdea(id, who, n);
   await loadIdeas();
-  ui.render();
+
+  // Check for mutual 5 stars
+  if (n === 5 && oldRating !== 5) {
+    const updatedIdea = state.ideas.find(i => i.id === id);
+    notifications.checkMutual5Stars(updatedIdea);
+  }
+
+  // Render based on current mode
+  if (state.mode === 'swipe') {
+    ui.renderSwipe();
+  } else {
+    ui.render();
+  }
 }
 
 /* ---------- Import / Export ---------- */
@@ -644,7 +1470,13 @@ const io = {
 
 /* ---------- Init ---------- */
 async function loadIdeas(){
+  const oldIdeas = state.ideas;
   state.ideas = await api.getIdeas();
+
+  // Check for new ideas (only after initial load)
+  if (oldIdeas.length > 0) {
+    notifications.checkNewIdeas(state.ideas);
+  }
 }
 
 document.getElementById('q').addEventListener('keydown', e=>{
@@ -652,8 +1484,13 @@ document.getElementById('q').addEventListener('keydown', e=>{
 });
 
 (async function init(){
-  await loadIdeas();
-  ui.render();
+  theme.init();
+  auth.checkLogin();
+  carousel.init();
+
+  // Update theme button states
+  document.getElementById('themeBlue').classList.toggle('active', theme.current === 'blue');
+  document.getElementById('themePink').classList.toggle('active', theme.current === 'pink');
 })();
 </script>
 </body>
