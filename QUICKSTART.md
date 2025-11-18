@@ -39,10 +39,79 @@ ip addr
 Look for "inet" → something like `192.168.1.100`
 
 ### Step 4: Access from Phones
+
+**Option A: Local Network (Same WiFi)**
 1. Connect both phones to same WiFi
 2. Open browser
 3. Go to: `http://YOUR_IP:3000`
    - Example: `http://192.168.1.100:3000`
+
+**Option B: Cloudflare Tunnel (Anywhere, No Port Forwarding)**
+
+Perfect for accessing from different networks without exposing your IP!
+
+1. Install Cloudflare Tunnel:
+   ```bash
+   # Download from: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+   # Or use package manager:
+
+   # Mac (Homebrew)
+   brew install cloudflare/cloudflare/cloudflared
+
+   # Windows (Chocolatey)
+   choco install cloudflared
+
+   # Linux
+   wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+   chmod +x cloudflared-linux-amd64
+   sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+   ```
+
+2. Start tunnel:
+   ```bash
+   cloudflared tunnel --url http://localhost:3000
+   ```
+
+3. Copy the `https://` URL it generates (e.g., `https://random-name.trycloudflare.com`)
+4. Share this URL with your partner - works anywhere!
+
+**Option C: ngrok (Anywhere, Simple Setup)**
+
+Another great option for remote access:
+
+1. Sign up for free at https://ngrok.com
+2. Install ngrok:
+   ```bash
+   # Download from: https://ngrok.com/download
+   # Or use package manager:
+
+   # Mac (Homebrew)
+   brew install ngrok
+
+   # Windows (Chocolatey)
+   choco install ngrok
+
+   # Linux (Snap)
+   snap install ngrok
+   ```
+
+3. Authenticate (one-time):
+   ```bash
+   ngrok config add-authtoken YOUR_TOKEN_FROM_NGROK_DASHBOARD
+   ```
+
+4. Start tunnel:
+   ```bash
+   ngrok http 3000
+   ```
+
+5. Copy the `https://` URL (e.g., `https://abc123.ngrok-free.app`)
+6. Share this URL with your partner!
+
+**Which Option Should I Use?**
+- **Same WiFi**: Fastest, most private, works offline
+- **Cloudflare Tunnel**: Free, no signup, perfect for quick remote access
+- **ngrok**: Free tier available, more reliable long-term, includes request inspection
 
 ## First Use
 

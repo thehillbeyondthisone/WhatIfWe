@@ -787,15 +787,44 @@ const uploadHandlers = {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      state.currentImageData = e.target.result;
+      // Compress the image before storing
+      this.compressImage(e.target.result, (compressedData) => {
+        state.currentImageData = compressedData;
 
-      // Show preview
-      const preview = document.getElementById('imagePreview');
-      const previewImg = document.getElementById('imagePreviewImg');
-      previewImg.src = e.target.result;
-      preview.classList.remove('hidden');
+        // Show preview
+        const preview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('imagePreviewImg');
+        previewImg.src = compressedData;
+        preview.classList.remove('hidden');
+      });
     };
     reader.readAsDataURL(file);
+  },
+
+  compressImage(dataUrl, callback, maxWidth = 800, quality = 0.7) {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      // Resize if image is larger than maxWidth
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to JPEG with quality compression
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      callback(compressedDataUrl);
+    };
+    img.src = dataUrl;
   }
 };
 
@@ -1208,14 +1237,15 @@ const ui = {
     const their = idea.ratings?.[otherUser] || 0;
     const isUnrated = my === 0;
 
-    // Show partner's rating only if THEY rated it 3 or higher
-    const showPartnerRating = their >= 3;
-    const partnerRatingDisplay = showPartnerRating
-      ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
-      : `${users[otherUser]}: Hidden`;
-
     // Check if this is a "Would" item (both rated 3+)
     const isWould = my >= 3 && their >= 3;
+
+    // Show partner's rating ONLY if BOTH rated it 3 or higher
+    const showPartnerRating = isWould;
+    const partnerRatingDisplay = showPartnerRating
+      ? `${users[otherUser]}: ${'★'.repeat(their)}${'☆'.repeat(5-their)}`
+      : '';
+
     const wouldBadge = isWould ? `<span class="would-badge">Would ✅</span>` : '';
     const didBadge = idea.completed ? `<span class="did-badge">DID! 🎉</span>` : '';
 
@@ -1239,12 +1269,10 @@ const ui = {
     const actionButtons = state.view === 'declined' ? `
       <div class="row-actions">
         <button class="btn primary" onclick="event.stopPropagation(); formHandlers.restore('${idea.id}')">Restore to All Ideas</button>
-        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
       </div>
     ` : `
       <div class="row-actions">
         <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-        <button class="btn danger" onclick="event.stopPropagation(); formHandlers.del('${idea.id}')">Delete</button>
         <div class="grow"></div>
         ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
       </div>
