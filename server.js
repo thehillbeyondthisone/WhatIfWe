@@ -19,6 +19,7 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 const PREFERENCES_FILE = path.join(__dirname, 'preferences.json');
 const BACKUP_DIR = path.join(__dirname, 'backups');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
+const NGROK_CONFIG_FILE = path.join(__dirname, 'ngrok.config.json');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -767,6 +768,28 @@ function getLocalIP() {
   return { address: 'localhost', allAddresses: [] };
 }
 
+// Read ngrok config if it exists
+async function readNgrokConfig() {
+  try {
+    const data = await fs.readFile(NGROK_CONFIG_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+// Create default ngrok config file
+async function createDefaultNgrokConfig() {
+  const defaultConfig = {
+    authtoken: "",
+    region: "us",
+    description: "ngrok configuration. Get your authtoken from https://dashboard.ngrok.com/get-started/your-authtoken",
+    regions: ["us", "eu", "ap", "au", "sa", "jp", "in"]
+  };
+  await fs.writeFile(NGROK_CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+  console.log(`\n📝 Created ngrok.config.json - please add your authtoken from https://dashboard.ngrok.com`);
+}
+
 // Start ngrok tunnel (optional)
 async function startNgrokTunnel() {
   if (!ngrok) {
@@ -780,14 +803,62 @@ async function startNgrokTunnel() {
 
   try {
     console.log(`🌍 Starting ngrok tunnel (region: ${NGROK_REGION})...`);
-    const url = await ngrok.connect({
+
+    // Try to load local ngrok config
+    let ngrokConfig = await readNgrokConfig();
+
+    // Build ngrok options
+    const options = {
       addr: PORT,
       region: NGROK_REGION
-    });
+    };
+
+    // Priority order for authtoken:
+    // 1. Environment variable NGROK_AUTHTOKEN
+    // 2. Local ngrok.config.json file
+    // 3. System ngrok config (handled by ngrok library automatically)
+
+    if (process.env.NGROK_AUTHTOKEN) {
+      options.authtoken = process.env.NGROK_AUTHTOKEN;
+      console.log('   Using authtoken from NGROK_AUTHTOKEN environment variable');
+    } else if (ngrokConfig && ngrokConfig.authtoken) {
+      options.authtoken = ngrokConfig.authtoken;
+      console.log('   Using authtoken from ngrok.config.json');
+    } else {
+      console.log('   Using system ngrok configuration');
+    }
+
+    const url = await ngrok.connect(options);
     console.log(`✓ ngrok tunnel established: ${url}`);
     return url;
   } catch (error) {
     console.error('⚠️  ngrok tunnel failed:', error.message);
+
+    // Provide helpful setup instructions
+    if (error.message.includes('authtoken') || error.message.includes('authentication') || error.message.includes('invalid tunnel configuration')) {
+      console.log('\n' + '='.repeat(60));
+      console.log('📝 NGROK SETUP REQUIRED');
+      console.log('='.repeat(60));
+      console.log('\nOption 1: Use environment variable (recommended for security)');
+      console.log('   export NGROK_AUTHTOKEN="your_token_here"');
+      console.log('   npm run remote');
+      console.log('\nOption 2: Create ngrok.config.json file');
+      console.log('   Get your authtoken from: https://dashboard.ngrok.com/get-started/your-authtoken');
+
+      // Create config file if it doesn't exist
+      const configExists = await readNgrokConfig();
+      if (!configExists) {
+        await createDefaultNgrokConfig();
+      } else {
+        console.log('   Edit ngrok.config.json and add your authtoken');
+      }
+
+      console.log('\nOption 3: Use system ngrok config');
+      console.log('   Run: ngrok config add-authtoken YOUR_TOKEN');
+      console.log('   This saves to ~/.ngrok2/ngrok.yml');
+      console.log('\n' + '='.repeat(60));
+    }
+
     return null;
   }
 }
