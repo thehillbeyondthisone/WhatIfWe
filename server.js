@@ -168,7 +168,7 @@ async function initPreferencesFile() {
     const defaultPrefs = {
       person1: {
         displayName: 'Partner 1',
-        emojiCode: ['💙', '🌟', '✨'],
+        emojiCode: ['🦄', '🌈', '✨'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
@@ -176,7 +176,7 @@ async function initPreferencesFile() {
       },
       person2: {
         displayName: 'Partner 2',
-        emojiCode: ['🌈', '🎨', '💫'],
+        emojiCode: ['🍕', '🎉', '🚀'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
@@ -445,7 +445,7 @@ app.get('/api/preferences/:user', async (req, res) => {
     const prefs = await readPreferences();
     res.json(prefs[user] || {
       displayName: 'Partner',
-      emojiCode: ['❤️', '💙', '💚'],
+      emojiCode: ['🌈', '✨', '🎉'],
       mode: 'list',
       theme: 'blue',
       view: 'all',
@@ -471,7 +471,7 @@ app.patch('/api/preferences/:user', async (req, res) => {
     if (!prefs[user]) {
       prefs[user] = {
         displayName: 'Partner',
-        emojiCode: ['❤️', '💙', '💚'],
+        emojiCode: ['🌈', '✨', '🎉'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
