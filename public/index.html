@@ -800,12 +800,34 @@
 <script>
 /* ---------- Data & API ---------- */
 const api = {
+  timeout: 15000, // 15 second timeout for all requests
+
+  async fetchWithTimeout(url, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please check your connection');
+      }
+      throw error;
+    }
+  },
+
   async getIdeas(){
-    const res = await fetch('/api/ideas');
+    const res = await this.fetchWithTimeout('/api/ideas');
     return res.json();
   },
   async addIdea(idea){
-    const res = await fetch('/api/ideas', {
+    const res = await this.fetchWithTimeout('/api/ideas', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(idea)
@@ -813,7 +835,7 @@ const api = {
     return res.json();
   },
   async updateIdea(id, updates){
-    const res = await fetch(`/api/ideas/${id}`, {
+    const res = await this.fetchWithTimeout(`/api/ideas/${id}`, {
       method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(updates)
@@ -821,7 +843,7 @@ const api = {
     return res.json();
   },
   async rateIdea(id, person, rating){
-    const res = await fetch(`/api/ideas/${id}/rate`, {
+    const res = await this.fetchWithTimeout(`/api/ideas/${id}/rate`, {
       method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ person, rating })
@@ -829,11 +851,11 @@ const api = {
     return res.json();
   },
   async deleteIdea(id){
-    const res = await fetch(`/api/ideas/${id}`, { method: 'DELETE' });
+    const res = await this.fetchWithTimeout(`/api/ideas/${id}`, { method: 'DELETE' });
     return res.json();
   },
   async bulkUpdate(ideas){
-    const res = await fetch('/api/ideas/bulk', {
+    const res = await this.fetchWithTimeout('/api/ideas/bulk', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ ideas })
@@ -841,11 +863,11 @@ const api = {
     return res.json();
   },
   async getPreferences(user){
-    const res = await fetch(`/api/preferences/${user}`);
+    const res = await this.fetchWithTimeout(`/api/preferences/${user}`);
     return res.json();
   },
   async updatePreferences(user, prefs){
-    const res = await fetch(`/api/preferences/${user}`, {
+    const res = await this.fetchWithTimeout(`/api/preferences/${user}`, {
       method: 'PATCH',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(prefs)
@@ -853,11 +875,11 @@ const api = {
     return res.json();
   },
   async getProfiles(){
-    const res = await fetch('/api/profiles');
+    const res = await this.fetchWithTimeout('/api/profiles');
     return res.json();
   },
   async validateEmojiCode(emojiCode){
-    const res = await fetch('/api/auth/validate', {
+    const res = await this.fetchWithTimeout('/api/auth/validate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ emojiCode })
@@ -1964,6 +1986,8 @@ const formHandlers = {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
 
+    let shouldCloseForm = false;
+
     try {
       if (id){
         // edit - only update the content and current user's rating
@@ -2002,7 +2026,7 @@ const formHandlers = {
       }
 
       await loadIdeas();
-      ui.closeForm();
+      shouldCloseForm = true;
 
       if (state.mode === 'swipe') {
         ui.renderSwipe();
@@ -2011,9 +2035,16 @@ const formHandlers = {
       }
     } catch (error) {
       console.error('Save error:', error);
-      notifications.show('Save Failed', 'Could not save your idea. Please try again.', 'error');
-      saveBtn.disabled = false;
-      saveBtn.textContent = originalText;
+      const errorMsg = error.message || 'Could not save your idea. Please try again.';
+      notifications.show('Save Failed', errorMsg, 'error');
+    } finally {
+      // Always re-enable button, unless we're closing the form
+      if (shouldCloseForm) {
+        ui.closeForm();
+      } else {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   },
   async del(idOpt){

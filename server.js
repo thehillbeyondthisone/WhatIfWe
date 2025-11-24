@@ -5,15 +5,100 @@ const https = require('https');
 const os = require('os');
 const qrcode = require('qrcode-terminal');
 
+// Optional: Try to load ngrok
+let ngrok = null;
+try {
+  ngrok = require('ngrok');
+} catch (e) {
+  console.log('💡 ngrok not installed - remote access disabled. Run: npm install ngrok');
+}
+
 const app = express();
 const PORT = 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const PREFERENCES_FILE = path.join(__dirname, 'preferences.json');
+const BACKUP_DIR = path.join(__dirname, 'backups');
 
 // Increase payload limit to handle base64 images (10MB)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static('public'));
+
+// Ensure backup directory exists
+async function ensureBackupDir() {
+  try {
+    await fs.access(BACKUP_DIR);
+  } catch {
+    await fs.mkdir(BACKUP_DIR);
+  }
+}
+
+// Create a backup of the data file
+async function createBackup() {
+  try {
+    await ensureBackupDir();
+    const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+    const backupFile = path.join(BACKUP_DIR, `data-${timestamp}.json`);
+    const data = await fs.readFile(DATA_FILE, 'utf8');
+    await fs.writeFile(backupFile, data);
+    console.log(`✓ Backup created: ${backupFile}`);
+    return backupFile;
+  } catch (error) {
+    console.error('Backup creation failed:', error);
+    throw error;
+  }
+}
+
+// List all available backups
+async function listBackups() {
+  try {
+    await ensureBackupDir();
+    const files = await fs.readdir(BACKUP_DIR);
+    const backups = files
+      .filter(f => f.startsWith('data-') && f.endsWith('.json'))
+      .sort()
+      .reverse();
+
+    const backupList = await Promise.all(backups.map(async (file) => {
+      const filePath = path.join(BACKUP_DIR, file);
+      const stats = await fs.stat(filePath);
+      return {
+        filename: file,
+        path: filePath,
+        size: stats.size,
+        created: stats.mtime
+      };
+    }));
+
+    return backupList;
+  } catch (error) {
+    console.error('Failed to list backups:', error);
+    return [];
+  }
+}
+
+// Restore from a backup
+async function restoreFromBackup(backupFilename) {
+  try {
+    const backupPath = path.join(BACKUP_DIR, backupFilename);
+
+    // Verify backup exists
+    await fs.access(backupPath);
+
+    // Create a backup of current data before restoring
+    await createBackup();
+
+    // Restore the backup
+    const backupData = await fs.readFile(backupPath, 'utf8');
+    await fs.writeFile(DATA_FILE, backupData);
+
+    console.log(`✓ Restored from backup: ${backupFilename}`);
+    return true;
+  } catch (error) {
+    console.error('Restore failed:', error);
+    throw error;
+  }
+}
 
 // Initialize data file if it doesn't exist
 async function initDataFile() {
@@ -157,9 +242,17 @@ async function readData() {
   return JSON.parse(data);
 }
 
-// Write data
+// Write data (with automatic backup every 10th write)
+let writeCounter = 0;
 async function writeData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+
+  // Create automatic backup every 10 writes
+  writeCounter++;
+  if (writeCounter >= 10) {
+    writeCounter = 0;
+    createBackup().catch(err => console.error('Auto-backup failed:', err));
+  }
 }
 
 // Initialize preferences file if it doesn't exist
@@ -497,6 +590,56 @@ app.patch('/api/preferences/:user', async (req, res) => {
   }
 });
 
+// Backup and restore endpoints
+app.post('/api/backup/create', async (req, res) => {
+  try {
+    const backupFile = await createBackup();
+    res.json({ success: true, backup: path.basename(backupFile) });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create backup' });
+  }
+});
+
+app.get('/api/backup/list', async (req, res) => {
+  try {
+    const backups = await listBackups();
+    res.json(backups);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list backups' });
+  }
+});
+
+app.post('/api/backup/restore', async (req, res) => {
+  try {
+    const { filename } = req.body;
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename required' });
+    }
+
+    await restoreFromBackup(filename);
+    res.json({ success: true, message: `Restored from ${filename}` });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to restore backup' });
+  }
+});
+
+app.get('/api/backup/download/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const backupPath = path.join(BACKUP_DIR, filename);
+
+    // Security: prevent directory traversal
+    if (!filename.startsWith('data-') || !filename.endsWith('.json')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    await fs.access(backupPath);
+    res.download(backupPath);
+  } catch (error) {
+    res.status(404).json({ error: 'Backup not found' });
+  }
+});
+
 // Get local IP address - prioritize common home network ranges
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -537,9 +680,29 @@ function getLocalIP() {
   return { address: 'localhost', allAddresses: [] };
 }
 
+// Start ngrok tunnel (optional)
+async function startNgrokTunnel() {
+  if (!ngrok) {
+    return null;
+  }
+
+  try {
+    console.log('🌍 Starting ngrok tunnel...');
+    const url = await ngrok.connect({
+      addr: PORT,
+      region: 'us'
+    });
+    console.log(`✓ ngrok tunnel established: ${url}`);
+    return url;
+  } catch (error) {
+    console.error('⚠️  ngrok tunnel failed:', error.message);
+    return null;
+  }
+}
+
 // Start server
-Promise.all([initDataFile(), initPreferencesFile()]).then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
+Promise.all([initDataFile(), initPreferencesFile()]).then(async () => {
+  app.listen(PORT, '0.0.0.0', async () => {
     const ipInfo = getLocalIP();
     const localUrl = `http://${ipInfo.address}:${PORT}`;
 
@@ -562,6 +725,19 @@ Promise.all([initDataFile(), initPreferencesFile()]).then(() => {
     console.log('📱 Scan with your phone:\n');
     qrcode.generate(localUrl, { small: true });
 
+    // Try to start ngrok tunnel
+    const ngrokUrl = await startNgrokTunnel();
+    if (ngrokUrl) {
+      console.log('\n' + '='.repeat(60));
+      console.log('🌍 REMOTE ACCESS (ngrok tunnel)');
+      console.log('='.repeat(60));
+      console.log(`\n🔗 Access from anywhere: ${ngrokUrl}`);
+      console.log('📱 Share this link with your partner!\n');
+      console.log('⚠️  Note: ngrok free tier has session limits');
+      console.log('   → Sessions expire after inactivity');
+      console.log('   → URL changes on each restart\n');
+    }
+
     console.log('\n' + '='.repeat(60));
     console.log('🚨 TROUBLESHOOTING: Can\'t access from other devices?');
     console.log('='.repeat(60));
@@ -574,7 +750,7 @@ Promise.all([initDataFile(), initPreferencesFile()]).then(() => {
     console.log('   • On Windows: Windows Defender Firewall → Allow an app');
     console.log('   • On Linux: sudo ufw allow 3000/tcp');
     console.log('\n3. Verify devices are on the SAME Wi-Fi network');
-    console.log('\n4. Try disabling firewall temporarily to test');
+    console.log('\n4. Use the ngrok URL above for remote access (no LAN needed)');
     console.log('\n' + '='.repeat(60) + '\n');
   });
 });
