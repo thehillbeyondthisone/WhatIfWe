@@ -8,6 +8,7 @@ const qrcode = require('qrcode-terminal');
 const app = express();
 const PORT = 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
+const PREFERENCES_FILE = path.join(__dirname, 'preferences.json');
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -157,6 +158,44 @@ async function readData() {
 // Write data
 async function writeData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+// Initialize preferences file if it doesn't exist
+async function initPreferencesFile() {
+  try {
+    await fs.access(PREFERENCES_FILE);
+  } catch {
+    const defaultPrefs = {
+      person1: {
+        displayName: 'Partner 1',
+        emojiCode: ['💙', '🌟', '✨'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      },
+      person2: {
+        displayName: 'Partner 2',
+        emojiCode: ['🌈', '🎨', '💫'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      }
+    };
+    await fs.writeFile(PREFERENCES_FILE, JSON.stringify(defaultPrefs, null, 2));
+  }
+}
+
+// Read preferences
+async function readPreferences() {
+  const data = await fs.readFile(PREFERENCES_FILE, 'utf8');
+  return JSON.parse(data);
+}
+
+// Write preferences
+async function writePreferences(data) {
+  await fs.writeFile(PREFERENCES_FILE, JSON.stringify(data, null, 2));
 }
 
 // Fetch thumbnail from URL
@@ -334,15 +373,125 @@ app.delete('/api/ideas/:id', async (req, res) => {
 app.post('/api/ideas/bulk', async (req, res) => {
   try {
     const { ideas } = req.body;
-    
+
     if (!Array.isArray(ideas)) {
       return res.status(400).json({ error: 'Ideas must be an array' });
     }
-    
+
     await writeData(ideas);
     res.json({ success: true, count: ideas.length });
   } catch (error) {
     res.status(500).json({ error: 'Failed to bulk update' });
+  }
+});
+
+// Get all profiles (for login screen)
+app.get('/api/profiles', async (req, res) => {
+  try {
+    const prefs = await readPreferences();
+    const profiles = {
+      person1: {
+        id: 'person1',
+        displayName: prefs.person1?.displayName || 'Partner 1'
+      },
+      person2: {
+        id: 'person2',
+        displayName: prefs.person2?.displayName || 'Partner 2'
+      }
+    };
+    res.json(profiles);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read profiles' });
+  }
+});
+
+// Validate emoji code login (auto-detect user)
+app.post('/api/auth/validate', async (req, res) => {
+  try {
+    const { emojiCode } = req.body;
+
+    if (!Array.isArray(emojiCode) || emojiCode.length !== 3) {
+      return res.status(400).json({ error: 'Invalid emoji code format' });
+    }
+
+    const prefs = await readPreferences();
+
+    // Check both users to see which one matches
+    for (const userId of ['person1', 'person2']) {
+      const userPrefs = prefs[userId];
+      const storedCode = userPrefs?.emojiCode || [];
+
+      if (JSON.stringify(emojiCode) === JSON.stringify(storedCode)) {
+        return res.json({ valid: true, user: userId });
+      }
+    }
+
+    // No match found
+    res.json({ valid: false });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to validate' });
+  }
+});
+
+// Get user preferences
+app.get('/api/preferences/:user', async (req, res) => {
+  try {
+    const { user } = req.params;
+
+    if (!['person1', 'person2'].includes(user)) {
+      return res.status(400).json({ error: 'Invalid user' });
+    }
+
+    const prefs = await readPreferences();
+    res.json(prefs[user] || {
+      displayName: 'Partner',
+      emojiCode: ['❤️', '💙', '💚'],
+      mode: 'list',
+      theme: 'blue',
+      view: 'all',
+      sort: 'date_desc'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read preferences' });
+  }
+});
+
+// Update user preferences
+app.patch('/api/preferences/:user', async (req, res) => {
+  try {
+    const { user } = req.params;
+    const { mode, theme, view, sort, displayName, emojiCode } = req.body;
+
+    if (!['person1', 'person2'].includes(user)) {
+      return res.status(400).json({ error: 'Invalid user' });
+    }
+
+    const prefs = await readPreferences();
+
+    if (!prefs[user]) {
+      prefs[user] = {
+        displayName: 'Partner',
+        emojiCode: ['❤️', '💙', '💚'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      };
+    }
+
+    if (mode !== undefined) prefs[user].mode = mode;
+    if (theme !== undefined) prefs[user].theme = theme;
+    if (view !== undefined) prefs[user].view = view;
+    if (sort !== undefined) prefs[user].sort = sort;
+    if (displayName !== undefined) prefs[user].displayName = displayName;
+    if (emojiCode !== undefined && Array.isArray(emojiCode) && emojiCode.length === 3) {
+      prefs[user].emojiCode = emojiCode;
+    }
+
+    await writePreferences(prefs);
+    res.json(prefs[user]);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update preferences' });
   }
 });
 
@@ -387,7 +536,7 @@ function getLocalIP() {
 }
 
 // Start server
-initDataFile().then(() => {
+Promise.all([initDataFile(), initPreferencesFile()]).then(() => {
   app.listen(PORT, '0.0.0.0', () => {
     const ipInfo = getLocalIP();
     const localUrl = `http://${ipInfo.address}:${PORT}`;

@@ -40,18 +40,94 @@
   .login-screen{
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     min-height:100vh; padding:20px; text-align:center;
-    background:var(--bg);
+    background:var(--bg); position:relative;
   }
-  .login-screen h1{font-size:32px; margin:0 0 10px; letter-spacing:.3px}
+  .login-screen h1{
+    font-family:'Pacifico', cursive;
+    font-size:36px; margin:0 0 10px; letter-spacing:1px;
+    color:var(--brand); font-weight:400;
+    text-shadow:
+      -1px -1px 0 #fff,
+      1px -1px 0 #fff,
+      -1px 1px 0 #fff,
+      1px 1px 0 #fff,
+      0 4px 12px rgba(0,0,0,0.5);
+  }
   .login-screen p{color:var(--subtle); margin:0 0 40px; font-size:16px}
-  .login-buttons{display:flex; flex-direction:column; gap:16px; width:100%; max-width:300px}
-  .login-btn{
-    padding:18px 24px; border:2px solid var(--brand); border-radius:12px;
+
+  .login-settings-btn{
+    position:absolute; top:20px; right:20px;
+    background:var(--panel); border:1px solid var(--border);
+    color:var(--text); padding:12px; border-radius:8px;
+    font-size:20px; cursor:pointer; transition:all 0.2s;
+  }
+  .login-settings-btn:hover{background:var(--muted)}
+
+  .login-main{width:100%; max-width:500px}
+
+  .profile-selector{display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+  .profile-card{
+    padding:24px 32px; border:2px solid var(--brand); border-radius:12px;
     background:linear-gradient(180deg, rgba(125,211,252,.1), rgba(125,211,252,.05));
-    color:var(--brand); font-size:18px; font-weight:700; cursor:pointer;
+    cursor:pointer; transition:all 0.2s; min-width:140px;
+  }
+  .profile-card:hover{transform:scale(1.05); background:rgba(125,211,252,.15)}
+  .profile-card:active{transform:scale(0.98)}
+  .profile-name{color:var(--brand); font-size:20px; font-weight:700}
+
+  .emoji-login{margin-top:20px}
+  .emoji-code-display{
+    display:flex; gap:12px; justify-content:center; margin-bottom:20px;
+    padding:16px; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; min-height:70px; align-items:center;
+  }
+  .emoji-slot{
+    width:60px; height:60px; border:2px dashed var(--border);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:32px; background:var(--muted);
+  }
+  .emoji-slot.filled{border:2px solid var(--brand); background:var(--panel)}
+
+  .emoji-grid{
+    display:grid; grid-template-columns:repeat(6, 1fr);
+    gap:10px; margin-bottom:20px; max-width:400px; margin-left:auto; margin-right:auto;
+  }
+  .emoji-grid.small{grid-template-columns:repeat(8, 1fr); gap:8px}
+  .emoji-btn{
+    width:100%; aspect-ratio:1; border:1px solid var(--border);
+    background:var(--panel); border-radius:8px; font-size:28px;
+    cursor:pointer; transition:all 0.2s; display:flex;
+    align-items:center; justify-content:center; padding:0;
+  }
+  .emoji-grid.small .emoji-btn{font-size:20px}
+  .emoji-btn:hover{transform:scale(1.1); background:var(--muted)}
+  .emoji-btn:active{transform:scale(0.95)}
+
+  .login-settings-panel{
+    position:fixed; inset:0; background:var(--bg);
+    z-index:200; display:flex; flex-direction:column;
+    padding:20px; overflow-y:auto;
+  }
+  .settings-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);
+  }
+  .settings-header h2{margin:0; color:var(--brand); font-size:24px}
+  .settings-content{max-width:500px; margin:0 auto; width:100%}
+
+  .profile-config{margin-bottom:32px}
+  .profile-config h3{color:var(--text); margin:0 0 20px; font-size:20px}
+
+  .profile-tabs{
+    display:flex; gap:8px; background:var(--panel);
+    border:1px solid var(--border); border-radius:8px; overflow:hidden;
+  }
+  .profile-tab{
+    flex:1; border:0; background:transparent; color:var(--subtle);
+    padding:12px; cursor:pointer; font-weight:600; font-size:14px;
     transition:all 0.2s;
   }
-  .login-btn:active{transform:scale(0.98); background:var(--brand); color:#0b1020}
+  .profile-tab.active{background:var(--brand); color:#0b1020}
 
   /* Settings Menu */
   .settings-toggle{
@@ -476,6 +552,14 @@
     padding:16px; box-shadow:0 8px 32px rgba(0,0,0,.8);
     animation:slideDown 0.3s ease-out;
   }
+  .notification.success{
+    background:linear-gradient(180deg, #1a3a2c, #0f2d1d);
+    border-color:var(--ok);
+  }
+  .notification.error{
+    background:linear-gradient(180deg, #3a1a1a, #2d0f0f);
+    border-color:var(--danger);
+  }
   @keyframes slideDown {
     from { transform:translateY(-100px); opacity:0; }
     to { transform:translateY(0); opacity:1; }
@@ -488,19 +572,84 @@
   .notification-title{font-weight:700; color:var(--brand); margin-bottom:6px; font-size:15px}
   .notification-body{font-size:14px; color:var(--text)}
 
+  /* Animations */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+
   /* Utility */
   .hidden{display:none !important}
   .grow{flex:1}
+
+  /* Smooth transitions */
+  .card, .swipe-card{
+    transition:transform 0.3s ease, opacity 0.3s ease;
+  }
+  .btn{
+    transition:all 0.2s ease;
+  }
+  .btn:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+  .btn:active:not(:disabled){
+    transform:translateY(0);
+  }
+  .notification{
+    transition:opacity 0.3s ease, transform 0.3s ease;
+  }
+  .stars .s, .stars-inline .s{
+    transition:transform 0.2s ease, filter 0.2s ease;
+  }
+  .stars .s:hover, .stars-inline .s:hover{
+    filter:brightness(1.3);
+  }
 </style>
 </head>
 <body>
 <!-- Login Screen -->
 <div id="loginScreen" class="login-screen hidden">
-  <h1>What if we…</h1>
-  <p>Choose your profile to continue</p>
-  <div class="login-buttons">
-    <button class="login-btn" onclick="auth.login('person1')">Laura</button>
-    <button class="login-btn" onclick="auth.login('person2')">Boden</button>
+  <button class="login-settings-btn" onclick="loginUI.openSettings()">⚙</button>
+
+  <div id="loginMain" class="login-main">
+    <h1>What if we…</h1>
+    <p id="loginSubtitle">Enter your emoji code</p>
+
+    <div class="emoji-login" id="emojiLogin">
+      <div class="emoji-code-display" id="emojiCodeDisplay"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+  </div>
+
+  <!-- Login Settings Panel -->
+  <div class="login-settings-panel hidden" id="loginSettingsPanel">
+    <div class="settings-header">
+      <h2>Profile Settings</h2>
+      <button class="btn ghost" onclick="loginUI.closeSettings()">✕</button>
+    </div>
+    <div class="settings-content">
+      <div class="profile-config">
+        <h3 id="configProfileName">Partner 1</h3>
+        <div class="f">
+          <div>
+            <label>Display Name</label>
+            <input type="text" id="configName" class="field" placeholder="Enter name">
+          </div>
+          <div>
+            <label>Emoji Code (tap 3 emojis in order)</label>
+            <div class="emoji-code-display" id="configEmojiDisplay"></div>
+            <div class="emoji-grid small" id="configEmojiGrid"></div>
+          </div>
+          <button class="btn primary" onclick="loginUI.saveProfile()">Save Changes</button>
+        </div>
+      </div>
+      <div class="profile-tabs">
+        <button class="profile-tab active" onclick="loginUI.configProfile('person1')">Partner 1</button>
+        <button class="profile-tab" onclick="loginUI.configProfile('person2')">Partner 2</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -509,10 +658,7 @@
   <header>
     <div class="title">
       <h1>What if we…</h1>
-      <div style="display:flex; gap:8px; align-items:center">
-        <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
-        <button class="btn ghost" onclick="auth.logout()">Switch User</button>
-      </div>
+      <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
     </div>
     <div class="settings-panel hidden" id="settingsPanel">
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -533,9 +679,11 @@
         </div>
         <div>
           <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Theme</label>
-          <div class="seg">
+          <div class="seg" style="display:grid; grid-template-columns:1fr 1fr; gap:0">
             <button class="active" id="themeBlue" onclick="theme.set('blue')">💙 Blue</button>
             <button id="themePink" onclick="theme.set('pink')">💕 Pink</button>
+            <button id="themeGreen" onclick="theme.set('green')">💚 Green</button>
+            <button id="themeYellow" onclick="theme.set('yellow')">💛 Yellow</button>
           </div>
         </div>
         <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
@@ -548,6 +696,7 @@
           <option value="avg_asc">Avg rating ↑</option>
         </select>
         <button class="btn primary" onclick="ui.openForm()" style="width:100%">+ Add New Idea</button>
+        <button class="btn ghost" onclick="auth.logout()" style="width:100%; margin-top:8px">Logout</button>
       </div>
     </div>
   </header>
@@ -572,13 +721,27 @@
 
   <!-- List Mode -->
   <div class="grid hidden" id="grid"></div>
-  <div class="empty hidden" id="emptyState">
-    No ideas yet. Tap "+ Add" to create one!
+  <div class="empty hidden" id="emptyState" style="text-align:center; padding:40px 20px">
+    <div style="font-size:48px; margin-bottom:16px">💭</div>
+    <div style="font-size:18px; font-weight:600; margin-bottom:8px; color:var(--text)">No ideas yet!</div>
+    <div style="font-size:14px; color:var(--subtle)">Tap the "+ Add" button to create your first date idea.</div>
   </div>
 </div>
 
 <!-- Notifications -->
 <div id="notifications"></div>
+
+<!-- Confirmation Dialog -->
+<div id="confirmDialog" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px">
+  <div style="background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px; max-width:400px; width:100%">
+    <div style="font-size:18px; font-weight:700; margin-bottom:12px" id="confirmTitle">Confirm</div>
+    <div style="color:var(--subtle); margin-bottom:24px" id="confirmMessage">Are you sure?</div>
+    <div style="display:flex; gap:12px; justify-content:flex-end">
+      <button class="btn ghost" onclick="confirmDialog.cancel()">Cancel</button>
+      <button class="btn danger" id="confirmBtn" onclick="confirmDialog.confirm()">Delete</button>
+    </div>
+  </div>
+</div>
 
 <!-- Edit Dialog -->
 <dialog id="sheet">
@@ -594,6 +757,10 @@
           <label for="imageFile">Upload Image 📸</label>
           <input type="file" id="imageFile" accept="image/*" onchange="uploadHandlers.handleImageUpload(event)">
           <div id="imagePreview" class="hidden" style="margin-top:10px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:13px; color:var(--subtle)">
+              <span id="imageSize"></span>
+              <button type="button" onclick="uploadHandlers.removeImage()" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px">Remove</button>
+            </div>
             <img id="imagePreviewImg" style="max-width:100%; border-radius:8px; border:1px solid var(--border)">
           </div>
         </div>
@@ -672,6 +839,30 @@ const api = {
       body: JSON.stringify({ ideas })
     });
     return res.json();
+  },
+  async getPreferences(user){
+    const res = await fetch(`/api/preferences/${user}`);
+    return res.json();
+  },
+  async updatePreferences(user, prefs){
+    const res = await fetch(`/api/preferences/${user}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(prefs)
+    });
+    return res.json();
+  },
+  async getProfiles(){
+    const res = await fetch('/api/profiles');
+    return res.json();
+  },
+  async validateEmojiCode(emojiCode){
+    const res = await fetch('/api/auth/validate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ emojiCode })
+    });
+    return res.json();
   }
 };
 
@@ -681,7 +872,7 @@ const state = {
   query:'',
   sort:'date_desc',
   view: 'all',
-  mode: 'swipe', // 'swipe' or 'list'
+  mode: 'list', // 'swipe' or 'list'
   currentImageData: null, // Base64 image data from upload
   lastSeenIdeas: JSON.parse(localStorage.getItem('lastSeenIdeas') || '[]'),
   currentIndex: 0 // Current card index in carousel
@@ -689,7 +880,7 @@ const state = {
 
 /* ---------- Theme System ---------- */
 const theme = {
-  current: localStorage.getItem('theme') || 'blue',
+  current: 'blue',
 
   themes: {
     blue: {
@@ -709,22 +900,52 @@ const theme = {
       '--text': '#e9d5ff',
       '--subtle': '#c084fc',
       '--brand': '#d946ef'
+    },
+    green: {
+      '--bg': '#0a1612',
+      '--panel': '#0f2419',
+      '--muted': '#1e3a2e',
+      '--border': '#2d5240',
+      '--text': '#d1f0e1',
+      '--subtle': '#86c7a8',
+      '--brand': '#34d399'
+    },
+    yellow: {
+      '--bg': '#1a1508',
+      '--panel': '#2a2010',
+      '--muted': '#3d3020',
+      '--border': '#5a4a2d',
+      '--text': '#fef3c7',
+      '--subtle': '#fcd34d',
+      '--brand': '#fbbf24'
     }
   },
 
-  init() {
+  init(name) {
+    this.current = name || 'blue';
     this.apply(this.current);
+    // Update button states
+    ['blue', 'pink', 'green', 'yellow'].forEach(theme => {
+      const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+      if (btn) btn.classList.toggle('active', this.current === theme);
+    });
   },
 
-  set(name) {
+  async set(name) {
     if (!this.themes[name]) return;
     this.current = name;
-    localStorage.setItem('theme', name);
     this.apply(name);
 
+    // Save to server
+    if (state.user) {
+      await api.updatePreferences(state.user, { theme: name });
+    }
+
     // Update button states
-    document.getElementById('themeBlue').classList.toggle('active', name === 'blue');
-    document.getElementById('themePink').classList.toggle('active', name === 'pink');
+    ['blue', 'pink', 'green', 'yellow'].forEach(theme => {
+      const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+      if (btn) btn.classList.toggle('active', name === theme);
+    });
   },
 
   apply(name) {
@@ -738,37 +959,255 @@ const theme = {
   }
 };
 
+/* ---------- Login UI ---------- */
+const loginUI = {
+  currentEmojiCode: [],
+  configUser: 'person1',
+  configCode: [],
+  availableEmojis: ['❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '💗', '🌟', '✨', '⭐', '💫', '🌙', '☀️', '🌈', '🔥', '💎', '👑', '🎨', '🎭', '🎪', '🎯', '🎸', '🎵'],
+
+  init() {
+    // Show emoji entry directly
+    this.currentEmojiCode = [];
+    this.renderEmojiDisplay('emojiCodeDisplay');
+    this.renderEmojiGrid('emojiGrid', 'login');
+
+    // Add ESC key handler to clear emoji code
+    this.addKeyboardHandlers();
+  },
+
+  addKeyboardHandlers() {
+    const handler = (e) => {
+      if (e.key === 'Escape' && this.currentEmojiCode.length > 0) {
+        this.currentEmojiCode = [];
+        this.renderEmojiDisplay('emojiCodeDisplay');
+      }
+    };
+    document.addEventListener('keydown', handler);
+    // Store handler for cleanup if needed
+    this._keyHandler = handler;
+  },
+
+  renderEmojiDisplay(containerId) {
+    const container = document.getElementById(containerId);
+    const html = Array.from({length: 3}, (_, i) => {
+      const emoji = this.currentEmojiCode[i] || '';
+      const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
+      return `<div class="${className}">${emoji}</div>`;
+    }).join('');
+    container.innerHTML = html;
+  },
+
+  renderEmojiGrid(containerId, mode) {
+    const container = document.getElementById(containerId);
+    const clickHandler = mode === 'login' ? 'loginUI.addEmoji' : 'loginUI.addConfigEmoji';
+    const html = this.availableEmojis.map(emoji =>
+      `<button class="emoji-btn" onclick="${clickHandler}('${emoji}')">${emoji}</button>`
+    ).join('');
+    container.innerHTML = html;
+  },
+
+  async addEmoji(emoji) {
+    if (this.currentEmojiCode.length < 3) {
+      this.currentEmojiCode.push(emoji);
+      this.renderEmojiDisplay('emojiCodeDisplay');
+
+      // If 3 emojis selected, validate
+      if (this.currentEmojiCode.length === 3) {
+        await this.validateLogin();
+      }
+    }
+  },
+
+  async validateLogin() {
+    try {
+      const result = await api.validateEmojiCode(this.currentEmojiCode);
+
+      if (result.valid && result.user) {
+        // Success! Login with detected user
+        await auth.login(result.user);
+      } else {
+        // Wrong code - shake and reset
+        const display = document.getElementById('emojiCodeDisplay');
+        display.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          display.style.animation = '';
+          this.currentEmojiCode = [];
+          this.renderEmojiDisplay('emojiCodeDisplay');
+        }, 500);
+      }
+    } catch (err) {
+      console.error('Login validation failed:', err);
+      this.currentEmojiCode = [];
+      this.renderEmojiDisplay('emojiCodeDisplay');
+    }
+  },
+
+  async openSettings() {
+    document.getElementById('loginSettingsPanel').classList.remove('hidden');
+    await this.configProfile('person1');
+  },
+
+  closeSettings() {
+    document.getElementById('loginSettingsPanel').classList.add('hidden');
+    this.init(); // Reload profile names
+  },
+
+  async configProfile(user) {
+    this.configUser = user;
+    this.configCode = [];
+
+    // Update active tab
+    document.querySelectorAll('.profile-tab').forEach((tab, i) => {
+      tab.classList.toggle('active', (i === 0 && user === 'person1') || (i === 1 && user === 'person2'));
+    });
+
+    try {
+      const prefs = await api.getPreferences(user);
+      this.configCode = prefs.emojiCode || [];
+
+      document.getElementById('configProfileName').textContent = prefs.displayName || 'Partner';
+      document.getElementById('configName').value = prefs.displayName || '';
+
+      this.renderConfigEmojiDisplay();
+      this.renderEmojiGrid('configEmojiGrid', 'config');
+    } catch (err) {
+      console.error('Failed to load config:', err);
+    }
+  },
+
+  renderConfigEmojiDisplay() {
+    const container = document.getElementById('configEmojiDisplay');
+    const html = Array.from({length: 3}, (_, i) => {
+      const emoji = this.configCode[i] || '';
+      const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
+      return `<div class="${className}" onclick="loginUI.removeConfigEmoji(${i})">${emoji}</div>`;
+    }).join('');
+    container.innerHTML = html;
+  },
+
+  addConfigEmoji(emoji) {
+    if (this.configCode.length < 3) {
+      this.configCode.push(emoji);
+      this.renderConfigEmojiDisplay();
+    }
+  },
+
+  removeConfigEmoji(index) {
+    this.configCode.splice(index, 1);
+    this.renderConfigEmojiDisplay();
+  },
+
+  async saveProfile() {
+    const displayName = document.getElementById('configName').value.trim();
+
+    if (!displayName) {
+      alert('Please enter a display name');
+      return;
+    }
+
+    if (this.configCode.length !== 3) {
+      alert('Please select exactly 3 emojis for your code');
+      return;
+    }
+
+    try {
+      await api.updatePreferences(this.configUser, {
+        displayName,
+        emojiCode: this.configCode
+      });
+
+      notifications.show('Saved!', `Profile updated for ${displayName}`);
+      this.closeSettings();
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      alert('Failed to save profile');
+    }
+  }
+};
+
 /* ---------- Authentication ---------- */
 const auth = {
-  login(user) {
+  async login(user) {
     state.user = user;
-    localStorage.setItem('loggedInUser', user);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
 
-    loadIdeas().then(() => {
-      if (state.mode === 'swipe') {
-        ui.renderSwipe();
-      } else {
-        ui.render();
-      }
-    });
+    // Load user preferences from server
+    try {
+      const prefs = await api.getPreferences(user);
+
+      // Apply preferences to state
+      state.mode = prefs.mode || 'list';
+      state.view = prefs.view || 'all';
+      state.sort = prefs.sort || 'date_desc';
+
+      // Apply theme
+      theme.init(prefs.theme || 'blue');
+
+      // Update UI controls
+      document.getElementById('sort').value = state.sort;
+      ui.setMode(state.mode, true); // Skip save on initial load
+      ui.setView(state.view, true); // Skip save on initial load
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+      // Use defaults if preferences fail to load
+      theme.init('blue');
+    }
+
+    // Load user names and ideas
+    await loadUserNames();
+    await loadIdeas();
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   },
   logout() {
-    state.user = null;
-    localStorage.removeItem('loggedInUser');
-    document.getElementById('mainApp').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
+    confirmDialog.show(
+      'Logout?',
+      'Are you sure you want to log out?',
+      'Logout',
+      () => {
+        // Clean up state
+        state.user = null;
+        state.ideas = [];
+        state.query = '';
+        state.currentImageData = null;
+
+        // Close settings panel
+        const settingsPanel = document.getElementById('settingsPanel');
+        if (settingsPanel) settingsPanel.classList.add('hidden');
+
+        // Hide main app and show login screen
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+
+        // Reinitialize login UI
+        loginUI.init();
+      }
+    );
   },
   checkLogin() {
     // Always show login screen on refresh
-    localStorage.removeItem('loggedInUser');
     document.getElementById('loginScreen').classList.remove('hidden');
   }
 };
 
 /* ---------- Utilities ---------- */
-const users = {person1:'Laura', person2:'Boden'};
+const users = {person1:'Partner 1', person2:'Partner 2'};
+
+// Load user display names dynamically
+async function loadUserNames() {
+  try {
+    const profiles = await api.getProfiles();
+    users.person1 = profiles.person1.displayName;
+    users.person2 = profiles.person2.displayName;
+  } catch (err) {
+    console.error('Failed to load user names:', err);
+  }
+}
 
 function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
 
@@ -778,67 +1217,183 @@ const uploadHandlers = {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image too large! Please choose an image under 5MB.');
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      notifications.show('Error', 'Image too large! Please choose an image under 10MB.', 'error');
       event.target.value = '';
       return;
     }
 
+    // Show loading indicator
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('imagePreviewImg');
+    const sizeDisplay = document.getElementById('imageSize');
+
+    preview.classList.remove('hidden');
+    previewImg.src = '';
+    sizeDisplay.textContent = 'Compressing...';
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      // Compress the image before storing
-      this.compressImage(e.target.result, (compressedData) => {
+      // Compress the image before storing with size guarantee
+      this.compressImage(e.target.result, (compressedData, finalSize) => {
         state.currentImageData = compressedData;
 
-        // Show preview
-        const preview = document.getElementById('imagePreview');
-        const previewImg = document.getElementById('imagePreviewImg');
+        // Show preview and size
         previewImg.src = compressedData;
-        preview.classList.remove('hidden');
+        sizeDisplay.textContent = `Image size: ${finalSize}`;
+
+        notifications.show('Success', `Image compressed to ${finalSize}`, 'success');
+      }, (error) => {
+        // Error callback
+        preview.classList.add('hidden');
+        event.target.value = '';
+        notifications.show('Error', error, 'error');
       });
     };
     reader.readAsDataURL(file);
   },
 
-  compressImage(dataUrl, callback, maxWidth = 800, quality = 0.7) {
+  removeImage() {
+    state.currentImageData = null;
+    document.getElementById('imagePreview').classList.add('hidden');
+    document.getElementById('imageFile').value = '';
+  },
+
+  compressImage(dataUrl, callback, errorCallback, maxSizeKB = 500) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
 
-      // Resize if image is larger than maxWidth
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
+      // Try different sizes and qualities until we get under maxSizeKB
+      const tryCompress = (maxWidth, quality) => {
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if image is larger than maxWidth
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG with quality compression
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+
+        // Calculate size in KB
+        const sizeBytes = Math.round((compressedDataUrl.length - 22) * 3 / 4); // Base64 size estimation
+        const sizeKB = Math.round(sizeBytes / 1024);
+
+        return { dataUrl: compressedDataUrl, sizeKB };
+      };
+
+      // Aggressive compression strategy
+      const strategies = [
+        { maxWidth: 1200, quality: 0.85 },
+        { maxWidth: 1000, quality: 0.8 },
+        { maxWidth: 800, quality: 0.75 },
+        { maxWidth: 800, quality: 0.7 },
+        { maxWidth: 600, quality: 0.7 },
+        { maxWidth: 600, quality: 0.6 },
+        { maxWidth: 500, quality: 0.6 },
+        { maxWidth: 500, quality: 0.5 },
+        { maxWidth: 400, quality: 0.5 },
+        { maxWidth: 400, quality: 0.4 },
+        { maxWidth: 300, quality: 0.4 }
+      ];
+
+      let result = null;
+      for (const strategy of strategies) {
+        result = tryCompress(strategy.maxWidth, strategy.quality);
+        if (result.sizeKB <= maxSizeKB) {
+          break;
+        }
       }
 
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Convert to JPEG with quality compression
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-      callback(compressedDataUrl);
+      if (result.sizeKB > maxSizeKB) {
+        errorCallback(`Could not compress image below ${maxSizeKB}KB. Final size: ${result.sizeKB}KB. Try a smaller image.`);
+      } else {
+        callback(result.dataUrl, `${result.sizeKB}KB`);
+      }
     };
+
+    img.onerror = () => {
+      errorCallback('Failed to load image. Please try a different file.');
+    };
+
     img.src = dataUrl;
+  }
+};
+
+/* ---------- Confirmation Dialog ---------- */
+const confirmDialog = {
+  callback: null,
+
+  show(title, message, confirmText = 'Confirm', onConfirm) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmBtn').textContent = confirmText;
+    document.getElementById('confirmDialog').classList.remove('hidden');
+    this.callback = onConfirm;
+  },
+
+  confirm() {
+    document.getElementById('confirmDialog').classList.add('hidden');
+    if (this.callback) {
+      this.callback();
+      this.callback = null;
+    }
+  },
+
+  cancel() {
+    document.getElementById('confirmDialog').classList.add('hidden');
+    this.callback = null;
   }
 };
 
 /* ---------- Notifications ---------- */
 const notifications = {
-  show(title, body, duration = 5000) {
+  show(title, body, type = 'info', duration = 5000) {
     const container = document.getElementById('notifications');
     const notif = document.createElement('div');
-    notif.className = 'notification';
+    notif.className = `notification ${type}`;
     notif.innerHTML = `
       <div class="notification-title">${esc(title)}</div>
       <div class="notification-body">${esc(body)}</div>
     `;
     container.appendChild(notif);
+
+    setTimeout(() => {
+      notif.classList.add('exit');
+      setTimeout(() => notif.remove(), 300);
+    }, duration);
+  },
+
+  showUndo(title, body, undoCallback, duration = 5000) {
+    const container = document.getElementById('notifications');
+    const notif = document.createElement('div');
+    notif.className = 'notification';
+    notif.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <div>
+          <div class="notification-title">${esc(title)}</div>
+          <div class="notification-body">${esc(body)}</div>
+        </div>
+        <button class="btn ghost" style="margin-left:16px; padding:8px 16px; font-size:14px" onclick="this.closest('.notification').dispatchEvent(new Event('undo'))">Undo</button>
+      </div>
+    `;
+    container.appendChild(notif);
+
+    notif.addEventListener('undo', () => {
+      notif.classList.add('exit');
+      setTimeout(() => notif.remove(), 300);
+      if (undoCallback) undoCallback();
+    });
 
     setTimeout(() => {
       notif.classList.add('exit');
@@ -929,6 +1484,10 @@ const carousel = {
     const idea = this.filteredIdeas[state.currentIndex];
     if (!idea) return;
 
+    // Store idea details for undo
+    const ideaId = idea.id;
+    const ideaDesc = idea.description.slice(0, 40) + (idea.description.length > 40 ? '...' : '');
+
     // Add user to declinedBy array
     const declinedBy = idea.declinedBy || [];
     if (!declinedBy.includes(state.user)) {
@@ -937,6 +1496,27 @@ const carousel = {
 
     await api.updateIdea(idea.id, { declinedBy });
     await loadIdeas();
+
+    // Show undo notification
+    notifications.showUndo(
+      'Declined',
+      `"${ideaDesc}" moved to declined.`,
+      async () => {
+        // Undo: restore the idea
+        const currentIdea = state.ideas.find(i => i.id === ideaId);
+        if (currentIdea) {
+          const restored = (currentIdea.declinedBy || []).filter(u => u !== state.user);
+          await api.updateIdea(ideaId, { declinedBy: restored });
+          await loadIdeas();
+          notifications.show('Restored', 'Idea restored to All Ideas.', 'success', 3000);
+          if (state.mode === 'swipe') {
+            this.renderCurrent();
+          } else {
+            ui.render();
+          }
+        }
+      }
+    );
 
     // Move to next idea
     this.next();
@@ -1029,7 +1609,7 @@ const ui = {
       this.render();
     }
   },
-  setMode(m){
+  async setMode(m, skipSave = false){
     state.mode = m;
     document.getElementById('modeSwipe').classList.toggle('active', m==='swipe');
     document.getElementById('modeList').classList.toggle('active', m==='list');
@@ -1037,17 +1617,27 @@ const ui = {
     document.getElementById('swipeContainer').classList.toggle('hidden', m!=='swipe');
     document.getElementById('grid').classList.toggle('hidden', m!=='list');
 
+    // Save to server
+    if (!skipSave && state.user) {
+      await api.updatePreferences(state.user, { mode: m });
+    }
+
     if (m === 'swipe') {
       this.renderSwipe();
     } else {
       this.render();
     }
   },
-  setView(v){
+  async setView(v, skipSave = false){
     state.view = v;
     document.getElementById('viewAll').classList.toggle('active', v==='all');
     document.getElementById('viewDeclined').classList.toggle('active', v==='declined');
     document.getElementById('viewWould').classList.toggle('active', v==='would');
+
+    // Save to server
+    if (!skipSave && state.user) {
+      await api.updatePreferences(state.user, { view: v });
+    }
 
     if (state.mode === 'swipe') {
       this.renderSwipe();
@@ -1118,13 +1708,27 @@ const ui = {
     const list = carousel.filteredIdeas;
 
     if (list.length === 0) {
-      let message = 'No ideas yet!';
+      let emoji = '💭';
+      let title = 'No ideas yet!';
+      let message = 'Tap the "+ Add" button to create your first date idea.';
+
       if (state.view === 'declined') {
-        message = 'No declined ideas.<br><br>Tap ✕ to decline ideas.';
+        emoji = '✕';
+        title = 'No declined ideas';
+        message = 'Tap the ✕ button on any idea to move it to declined.';
       } else if (state.view === 'would') {
-        message = 'No mutual favorites yet!<br><br>Both partners need to rate an idea 3+ hearts 💖';
+        emoji = '💖';
+        title = 'No mutual favorites yet!';
+        message = 'Both partners need to rate an idea 3+ hearts to see it here.';
       }
-      stack.innerHTML = `<div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%)">${message}</div>`;
+
+      stack.innerHTML = `
+        <div class="empty" style="position:absolute; width:100%; text-align:center; top:50%; transform:translateY(-50%); padding:20px">
+          <div style="font-size:64px; margin-bottom:20px">${emoji}</div>
+          <div style="font-size:20px; font-weight:600; margin-bottom:12px; color:var(--text)">${title}</div>
+          <div style="font-size:15px; color:var(--subtle); line-height:1.5">${message}</div>
+        </div>
+      `;
       document.getElementById('carouselIndicators').innerHTML = '';
       return;
     }
@@ -1147,9 +1751,15 @@ const ui = {
     }).join('');
     container.innerHTML = html;
   },
-  render(){
+  async render(){
     state.query = document.getElementById('q').value || '';
-    state.sort  = document.getElementById('sort').value;
+    const newSort = document.getElementById('sort').value;
+
+    // Save sort preference if it changed
+    if (newSort !== state.sort && state.user) {
+      await api.updatePreferences(state.user, { sort: newSort });
+    }
+    state.sort = newSort;
 
     const grid = document.getElementById('grid');
     const list = filters.apply(state.ideas);
@@ -1254,15 +1864,14 @@ const ui = {
         <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
         ${wouldBadge}
         ${didBadge}
-        ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
-        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">⚙</button>
       </div>` : `
       <div class="media">
         ${wouldBadge}
         ${didBadge}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
-        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">⚙</button>
       </div>`;
 
     // Buttons for declined view
@@ -1270,13 +1879,11 @@ const ui = {
       <div class="row-actions">
         <button class="btn primary" onclick="event.stopPropagation(); formHandlers.restore('${idea.id}')">Restore to All Ideas</button>
       </div>
-    ` : `
+    ` : idea.videoUrl ? `
       <div class="row-actions">
-        <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-        <div class="grow"></div>
-        ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
+        <a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">🎥 Watch Video</a>
       </div>
-    `;
+    ` : '';
 
     return `
       <article class="card" onclick="ui.openDetail('${idea.id}')">
@@ -1286,7 +1893,7 @@ const ui = {
         </div>
         <div class="ratings">
           <div class="stars" onclick="event.stopPropagation();">
-            ${stars.inline(my, n=>rate(idea.id, state.user, n))}
+            ${stars.inline(my, `async (n) => { await rate('${idea.id}', '${state.user}', n); }`)}
           </div>
           <div class="peer">${partnerRatingDisplay}</div>
         </div>
@@ -1344,66 +1951,101 @@ const formHandlers = {
       imageUrl = existingIdea?.imageUrl || '';
     }
 
-    if (!desc){ alert('Please enter a description.'); return; }
+    if (!desc){
+      notifications.show('Required Field', 'Please enter a description for your idea.', 'error');
+      return;
+    }
 
     const myR = stars.tmp.my|0;
 
-    if (id){
-      // edit - only update the content and current user's rating
-      const idea = state.ideas.find(i => i.id === id);
-      const oldRating = idea.ratings[state.user];
-      await api.updateIdea(id, {
-        description: desc,
-        videoUrl: video,
-        imageUrl: imageUrl,
-        notes,
-        completed,
-        ratings: { ...idea.ratings, [state.user]: myR }
-      });
+    // Show loading state
+    const saveBtn = e.target.querySelector('button[type="submit"]') || document.querySelector('button[form="form"]');
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
 
-      // Check for mutual 5 stars
-      if (myR === 5 && oldRating !== 5) {
-        const updatedIdea = { ...idea, ratings: { ...idea.ratings, [state.user]: myR } };
-        notifications.checkMutual5Stars(updatedIdea);
+    try {
+      if (id){
+        // edit - only update the content and current user's rating
+        const idea = state.ideas.find(i => i.id === id);
+        const oldRating = idea.ratings[state.user];
+        await api.updateIdea(id, {
+          description: desc,
+          videoUrl: video,
+          imageUrl: imageUrl,
+          notes,
+          completed,
+          ratings: { ...idea.ratings, [state.user]: myR }
+        });
+
+        notifications.show('Saved!', 'Your changes have been saved.', 'success', 3000);
+
+        // Check for mutual 5 stars
+        if (myR === 5 && oldRating !== 5) {
+          const updatedIdea = { ...idea, ratings: { ...idea.ratings, [state.user]: myR } };
+          notifications.checkMutual5Stars(updatedIdea);
+        }
+      } else {
+        // add - only set the creator's rating
+        await api.addIdea({
+          description: desc,
+          videoUrl: video,
+          imageUrl: imageUrl,
+          notes,
+          completed: false,
+          ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
+          createdBy: state.user,
+          comments: []
+        });
+
+        notifications.show('Added!', 'Your new idea has been added.', 'success', 3000);
       }
-    } else {
-      // add - only set the creator's rating
-      await api.addIdea({
-        description: desc,
-        videoUrl: video,
-        imageUrl: imageUrl,
-        notes,
-        completed: false,
-        ratings: { person1: state.user==='person1'?myR:0, person2: state.user==='person2'?myR:0 },
-        createdBy: state.user,
-        comments: []
-      });
-    }
 
-    await loadIdeas();
-    ui.closeForm();
+      await loadIdeas();
+      ui.closeForm();
 
-    if (state.mode === 'swipe') {
-      ui.renderSwipe();
-    } else {
-      ui.render();
+      if (state.mode === 'swipe') {
+        ui.renderSwipe();
+      } else {
+        ui.render();
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      notifications.show('Save Failed', 'Could not save your idea. Please try again.', 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
     }
   },
   async del(idOpt){
     const id = idOpt || document.getElementById('id').value;
     if (!id) return;
-    if (!confirm('Delete this idea?')) return;
-    
-    await api.deleteIdea(id);
-    await loadIdeas();
 
-    try{ document.getElementById('sheet').close(); }catch(_){}
+    const idea = state.ideas.find(i => i.id === id);
+    const previewText = idea?.description.slice(0, 50) + (idea?.description.length > 50 ? '...' : '');
 
-    if (state.mode === 'swipe') {
-      ui.renderSwipe();
-    } else {
-      ui.render();
-    }
+    confirmDialog.show(
+      'Delete Idea?',
+      `Are you sure you want to delete "${previewText}"? This cannot be undone.`,
+      'Delete',
+      async () => {
+        try {
+          await api.deleteIdea(id);
+          await loadIdeas();
+          notifications.show('Deleted', 'Idea has been deleted.', 'success', 3000);
+
+          try{ document.getElementById('sheet').close(); }catch(_){}
+
+          if (state.mode === 'swipe') {
+            ui.renderSwipe();
+          } else {
+            ui.render();
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          notifications.show('Delete Failed', 'Could not delete idea. Please try again.', 'error');
+        }
+      }
+    );
   },
   async restore(ideaId) {
     // Restore a declined idea by removing user from declinedBy array
@@ -1511,14 +2153,76 @@ document.getElementById('q').addEventListener('keydown', e=>{
   if(e.key==='Escape'){ e.currentTarget.value=''; state.query=''; ui.render(); }
 });
 
+// Pull-to-refresh functionality
+function initPullToRefresh() {
+  let touchStartY = 0;
+  let isPulling = false;
+  let isRefreshing = false;
+  let lastRefreshTime = 0;
+  const REFRESH_COOLDOWN = 3000; // 3 second cooldown between refreshes
+
+  const mainApp = document.getElementById('mainApp');
+
+  mainApp.addEventListener('touchstart', (e) => {
+    // Reset pulling state on new touch
+    touchStartY = e.touches[0].clientY;
+    isPulling = false;
+  }, { passive: true });
+
+  mainApp.addEventListener('touchmove', (e) => {
+    // Don't trigger if already refreshing or in cooldown
+    if (isRefreshing || Date.now() - lastRefreshTime < REFRESH_COOLDOWN) {
+      return;
+    }
+
+    const touchCurrentY = e.touches[0].clientY;
+    const pullDistance = touchCurrentY - touchStartY;
+
+    // Check scroll position - need to check both window and grid container
+    const grid = document.getElementById('grid');
+    const swipeContainer = document.getElementById('swipeContainer');
+    const activeContainer = state.mode === 'list' ? grid : swipeContainer;
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop ||
+                     activeContainer?.scrollTop || 0;
+
+    // Only trigger if at top of page, pulling down significantly, and user is logged in
+    if (scrollTop <= 10 && pullDistance > 80 && state.user) {
+      isPulling = true;
+    }
+  }, { passive: true });
+
+  mainApp.addEventListener('touchend', async () => {
+    if (isPulling && !isRefreshing && state.user) {
+      isPulling = false;
+      isRefreshing = true;
+      lastRefreshTime = Date.now();
+
+      notifications.show('Refreshing', 'Loading latest ideas...', 'info', 2000);
+
+      try {
+        await loadIdeas();
+        if (state.mode === 'swipe') {
+          ui.renderSwipe();
+        } else {
+          ui.render();
+        }
+      } finally {
+        isRefreshing = false;
+      }
+    } else {
+      // Reset pulling state if we didn't refresh
+      isPulling = false;
+    }
+  });
+}
+
 (async function init(){
-  theme.init();
   auth.checkLogin();
   carousel.init();
-
-  // Update theme button states
-  document.getElementById('themeBlue').classList.toggle('active', theme.current === 'blue');
-  document.getElementById('themePink').classList.toggle('active', theme.current === 'pink');
+  loginUI.init();
+  await loadUserNames();
+  initPullToRefresh();
 })();
 </script>
 </body>
