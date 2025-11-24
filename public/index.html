@@ -964,7 +964,7 @@ const loginUI = {
   currentEmojiCode: [],
   configUser: 'person1',
   configCode: [],
-  availableEmojis: ['🦄', '🐻', '🐼', '🦊', '🐶', '🐱', '🦁', '🐯', '🐸', '🐙', '🦋', '🐝', '🍕', '🍩', '🍦', '🎂', '🍰', '🌮', '🍔', '🍿', '🎮', '🎲', '🎳', '⚽', '🏀', '🎸', '🎨', '🎭', '🌈', '🌟', '✨', '💫', '🎈', '🎉', '🎊', '🎁', '🌸', '🌺', '🌻', '🌷', '🔥', '💎', '👑', '🧁', '🍭', '🚀', '🎪', '🎯'],
+  availableEmojis: ['😍', '🔥', '🥴', '🦴', '🫦', '🐓', '🐈‍⬛', '🍀', '🦋', '🍆', '💻', '🎉', '💧', '💦', '☔️', '🌊', '🚣🏻‍♂️', '💎', '🌈', '✨', '🎮', '🍕', '🚀', '🎸'],
 
   init() {
     // Show emoji entry directly
@@ -990,7 +990,7 @@ const loginUI = {
 
   renderEmojiDisplay(containerId) {
     const container = document.getElementById(containerId);
-    const html = Array.from({length: 3}, (_, i) => {
+    const html = Array.from({length: 4}, (_, i) => {
       const emoji = this.currentEmojiCode[i] || '';
       const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
       return `<div class="${className}">${emoji}</div>`;
@@ -1008,12 +1008,12 @@ const loginUI = {
   },
 
   async addEmoji(emoji) {
-    if (this.currentEmojiCode.length < 3) {
+    if (this.currentEmojiCode.length < 4) {
       this.currentEmojiCode.push(emoji);
       this.renderEmojiDisplay('emojiCodeDisplay');
 
-      // If 3 emojis selected, validate
-      if (this.currentEmojiCode.length === 3) {
+      // If 4 emojis selected, validate
+      if (this.currentEmojiCode.length === 4) {
         await this.validateLogin();
       }
     }
@@ -1078,7 +1078,7 @@ const loginUI = {
 
   renderConfigEmojiDisplay() {
     const container = document.getElementById('configEmojiDisplay');
-    const html = Array.from({length: 3}, (_, i) => {
+    const html = Array.from({length: 4}, (_, i) => {
       const emoji = this.configCode[i] || '';
       const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
       return `<div class="${className}" onclick="loginUI.removeConfigEmoji(${i})">${emoji}</div>`;
@@ -1087,7 +1087,7 @@ const loginUI = {
   },
 
   addConfigEmoji(emoji) {
-    if (this.configCode.length < 3) {
+    if (this.configCode.length < 4) {
       this.configCode.push(emoji);
       this.renderConfigEmojiDisplay();
     }
@@ -1106,8 +1106,8 @@ const loginUI = {
       return;
     }
 
-    if (this.configCode.length !== 3) {
-      alert('Please select exactly 3 emojis for your code');
+    if (this.configCode.length !== 4) {
+      alert('Please select exactly 4 emojis for your code');
       return;
     }
 

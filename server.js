@@ -10,7 +10,9 @@ const PORT = 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const PREFERENCES_FILE = path.join(__dirname, 'preferences.json');
 
-app.use(express.json());
+// Increase payload limit to handle base64 images (10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static('public'));
 
 // Initialize data file if it doesn't exist
@@ -168,7 +170,7 @@ async function initPreferencesFile() {
     const defaultPrefs = {
       person1: {
         displayName: 'Partner 1',
-        emojiCode: ['🦄', '🌈', '✨'],
+        emojiCode: ['😍', '🔥', '🌈', '✨'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
@@ -176,7 +178,7 @@ async function initPreferencesFile() {
       },
       person2: {
         displayName: 'Partner 2',
-        emojiCode: ['🍕', '🎉', '🚀'],
+        emojiCode: ['🍕', '🎉', '🚀', '💎'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
@@ -410,7 +412,7 @@ app.post('/api/auth/validate', async (req, res) => {
   try {
     const { emojiCode } = req.body;
 
-    if (!Array.isArray(emojiCode) || emojiCode.length !== 3) {
+    if (!Array.isArray(emojiCode) || emojiCode.length !== 4) {
       return res.status(400).json({ error: 'Invalid emoji code format' });
     }
 
@@ -445,7 +447,7 @@ app.get('/api/preferences/:user', async (req, res) => {
     const prefs = await readPreferences();
     res.json(prefs[user] || {
       displayName: 'Partner',
-      emojiCode: ['🌈', '✨', '🎉'],
+      emojiCode: ['🌈', '✨', '🎉', '💎'],
       mode: 'list',
       theme: 'blue',
       view: 'all',
@@ -471,7 +473,7 @@ app.patch('/api/preferences/:user', async (req, res) => {
     if (!prefs[user]) {
       prefs[user] = {
         displayName: 'Partner',
-        emojiCode: ['🌈', '✨', '🎉'],
+        emojiCode: ['🌈', '✨', '🎉', '💎'],
         mode: 'list',
         theme: 'blue',
         view: 'all',
@@ -484,7 +486,7 @@ app.patch('/api/preferences/:user', async (req, res) => {
     if (view !== undefined) prefs[user].view = view;
     if (sort !== undefined) prefs[user].sort = sort;
     if (displayName !== undefined) prefs[user].displayName = displayName;
-    if (emojiCode !== undefined && Array.isArray(emojiCode) && emojiCode.length === 3) {
+    if (emojiCode !== undefined && Array.isArray(emojiCode) && emojiCode.length === 4) {
       prefs[user].emojiCode = emojiCode;
     }
 
