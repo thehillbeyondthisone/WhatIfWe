@@ -583,21 +583,11 @@
 
   <div id="loginMain" class="login-main">
     <h1>What if we…</h1>
-    <p id="loginSubtitle">Tap your emoji code to continue</p>
+    <p id="loginSubtitle">Enter your emoji code</p>
 
-    <div class="profile-selector">
-      <button class="profile-card" id="profileBtn1" onclick="loginUI.selectProfile('person1')">
-        <div class="profile-name" id="profileName1">Partner 1</div>
-      </button>
-      <button class="profile-card" id="profileBtn2" onclick="loginUI.selectProfile('person2')">
-        <div class="profile-name" id="profileName2">Partner 2</div>
-      </button>
-    </div>
-
-    <div class="emoji-login hidden" id="emojiLogin">
+    <div class="emoji-login" id="emojiLogin">
       <div class="emoji-code-display" id="emojiCodeDisplay"></div>
       <div class="emoji-grid" id="emojiGrid"></div>
-      <button class="btn" onclick="loginUI.backToProfiles()">← Back</button>
     </div>
   </div>
 
@@ -816,11 +806,11 @@ const api = {
     const res = await fetch('/api/profiles');
     return res.json();
   },
-  async validateEmojiCode(user, emojiCode){
+  async validateEmojiCode(emojiCode){
     const res = await fetch('/api/auth/validate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ user, emojiCode })
+      body: JSON.stringify({ emojiCode })
     });
     return res.json();
   }
@@ -899,32 +889,14 @@ const theme = {
 
 /* ---------- Login UI ---------- */
 const loginUI = {
-  selectedUser: null,
   currentEmojiCode: [],
   configUser: 'person1',
   configCode: [],
   availableEmojis: ['❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '💗', '🌟', '✨', '⭐', '💫', '🌙', '☀️', '🌈', '🔥', '💎', '👑', '🎨', '🎭', '🎪', '🎯', '🎸', '🎵'],
 
-  async init() {
-    try {
-      const profiles = await api.getProfiles();
-      document.getElementById('profileName1').textContent = profiles.person1.displayName;
-      document.getElementById('profileName2').textContent = profiles.person2.displayName;
-    } catch (err) {
-      console.error('Failed to load profiles:', err);
-    }
-  },
-
-  selectProfile(user) {
-    this.selectedUser = user;
+  init() {
+    // Show emoji entry directly
     this.currentEmojiCode = [];
-
-    // Hide profile selector, show emoji login
-    document.querySelector('.profile-selector').classList.add('hidden');
-    document.getElementById('emojiLogin').classList.remove('hidden');
-    document.getElementById('loginSubtitle').textContent = `Enter your emoji code`;
-
-    // Render emoji grid and display
     this.renderEmojiDisplay('emojiCodeDisplay');
     this.renderEmojiGrid('emojiGrid', 'login');
   },
@@ -962,11 +934,11 @@ const loginUI = {
 
   async validateLogin() {
     try {
-      const result = await api.validateEmojiCode(this.selectedUser, this.currentEmojiCode);
+      const result = await api.validateEmojiCode(this.currentEmojiCode);
 
-      if (result.valid) {
-        // Success! Login
-        await auth.login(this.selectedUser);
+      if (result.valid && result.user) {
+        // Success! Login with detected user
+        await auth.login(result.user);
       } else {
         // Wrong code - shake and reset
         const display = document.getElementById('emojiCodeDisplay');
@@ -982,14 +954,6 @@ const loginUI = {
       this.currentEmojiCode = [];
       this.renderEmojiDisplay('emojiCodeDisplay');
     }
-  },
-
-  backToProfiles() {
-    this.selectedUser = null;
-    this.currentEmojiCode = [];
-    document.querySelector('.profile-selector').classList.remove('hidden');
-    document.getElementById('emojiLogin').classList.add('hidden');
-    document.getElementById('loginSubtitle').textContent = 'Tap your emoji code to continue';
   },
 
   async openSettings() {
@@ -1104,7 +1068,8 @@ const auth = {
       theme.init('blue');
     }
 
-    // Load ideas and render
+    // Load user names and ideas
+    await loadUserNames();
     await loadIdeas();
     if (state.mode === 'swipe') {
       ui.renderSwipe();
@@ -1124,7 +1089,18 @@ const auth = {
 };
 
 /* ---------- Utilities ---------- */
-const users = {person1:'Laura', person2:'Boden'};
+const users = {person1:'Partner 1', person2:'Partner 2'};
+
+// Load user display names dynamically
+async function loadUserNames() {
+  try {
+    const profiles = await api.getProfiles();
+    users.person1 = profiles.person1.displayName;
+    users.person2 = profiles.person2.displayName;
+  } catch (err) {
+    console.error('Failed to load user names:', err);
+  }
+}
 
 function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
 
@@ -1883,7 +1859,8 @@ document.getElementById('q').addEventListener('keydown', e=>{
 (async function init(){
   auth.checkLogin();
   carousel.init();
-  await loginUI.init();
+  loginUI.init();
+  await loadUserNames();
 })();
 </script>
 </body>

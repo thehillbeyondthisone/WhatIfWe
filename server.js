@@ -167,7 +167,7 @@ async function initPreferencesFile() {
   } catch {
     const defaultPrefs = {
       person1: {
-        displayName: 'Laura',
+        displayName: 'Partner 1',
         emojiCode: ['💙', '🌟', '✨'],
         mode: 'list',
         theme: 'blue',
@@ -175,7 +175,7 @@ async function initPreferencesFile() {
         sort: 'date_desc'
       },
       person2: {
-        displayName: 'Boden',
+        displayName: 'Partner 2',
         emojiCode: ['🌈', '🎨', '💫'],
         mode: 'list',
         theme: 'blue',
@@ -405,26 +405,29 @@ app.get('/api/profiles', async (req, res) => {
   }
 });
 
-// Validate emoji code login
+// Validate emoji code login (auto-detect user)
 app.post('/api/auth/validate', async (req, res) => {
   try {
-    const { user, emojiCode } = req.body;
-
-    if (!['person1', 'person2'].includes(user)) {
-      return res.status(400).json({ error: 'Invalid user' });
-    }
+    const { emojiCode } = req.body;
 
     if (!Array.isArray(emojiCode) || emojiCode.length !== 3) {
       return res.status(400).json({ error: 'Invalid emoji code format' });
     }
 
     const prefs = await readPreferences();
-    const userPrefs = prefs[user];
-    const storedCode = userPrefs?.emojiCode || [];
 
-    const isValid = JSON.stringify(emojiCode) === JSON.stringify(storedCode);
+    // Check both users to see which one matches
+    for (const userId of ['person1', 'person2']) {
+      const userPrefs = prefs[userId];
+      const storedCode = userPrefs?.emojiCode || [];
 
-    res.json({ valid: isValid });
+      if (JSON.stringify(emojiCode) === JSON.stringify(storedCode)) {
+        return res.json({ valid: true, user: userId });
+      }
+    }
+
+    // No match found
+    res.json({ valid: false });
   } catch (error) {
     res.status(500).json({ error: 'Failed to validate' });
   }
