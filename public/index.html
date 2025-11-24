@@ -103,6 +103,14 @@
   .emoji-btn:hover{transform:scale(1.1); background:var(--muted)}
   .emoji-btn:active{transform:scale(0.95)}
 
+  #loginBtn{
+    animation:fadeSlideIn 0.3s ease-out;
+  }
+  @keyframes fadeSlideIn {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
   .login-settings-panel{
     position:fixed; inset:0; background:var(--bg);
     z-index:200; display:flex; flex-direction:column;
@@ -620,6 +628,9 @@
     <div class="emoji-login" id="emojiLogin">
       <div class="emoji-code-display" id="emojiCodeDisplay"></div>
       <div class="emoji-grid" id="emojiGrid"></div>
+      <button class="btn primary hidden" id="loginBtn" onclick="loginUI.validateLogin()" style="width:100%; max-width:300px; margin:20px auto 0; display:none; font-size:18px; padding:14px;">
+        Login
+      </button>
     </div>
   </div>
 
@@ -885,6 +896,18 @@ const api = {
       body: JSON.stringify({ emojiCode })
     });
     return res.json();
+  },
+  async getConfig(){
+    const res = await this.fetchWithTimeout('/api/config');
+    return res.json();
+  },
+  async updateConfig(updates){
+    const res = await this.fetchWithTimeout('/api/config', {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(updates)
+    });
+    return res.json();
   }
 };
 
@@ -906,40 +929,40 @@ const theme = {
 
   themes: {
     blue: {
-      '--bg': '#020617',
-      '--panel': '#0f172a',
-      '--muted': '#1e293b',
-      '--border': '#334155',
-      '--text': '#cbd5e1',
-      '--subtle': '#94a3b8',
-      '--brand': '#60a5fa'
+      '--bg': '#0a1828',
+      '--panel': '#1a2332',
+      '--muted': '#253345',
+      '--border': '#3d4d61',
+      '--text': '#e8f0f7',
+      '--subtle': '#a8bfdb',
+      '--brand': '#4a9eff'
     },
     pink: {
-      '--bg': '#1a0d1f',
-      '--panel': '#2d1b3d',
-      '--muted': '#3d2648',
-      '--border': '#553c64',
-      '--text': '#e9d5ff',
-      '--subtle': '#c084fc',
-      '--brand': '#d946ef'
+      '--bg': '#1f1018',
+      '--panel': '#2d1a28',
+      '--muted': '#3f2838',
+      '--border': '#5a3d52',
+      '--text': '#f5e6f0',
+      '--subtle': '#d4a5c7',
+      '--brand': '#ff6b9d'
     },
     green: {
-      '--bg': '#0a1612',
-      '--panel': '#0f2419',
-      '--muted': '#1e3a2e',
-      '--border': '#2d5240',
-      '--text': '#d1f0e1',
-      '--subtle': '#86c7a8',
-      '--brand': '#34d399'
+      '--bg': '#0f1711',
+      '--panel': '#1a2420',
+      '--muted': '#253530',
+      '--border': '#3d4f45',
+      '--text': '#e8f2ed',
+      '--subtle': '#9dbfad',
+      '--brand': '#5fcc8f'
     },
     yellow: {
       '--bg': '#1a1508',
-      '--panel': '#2a2010',
-      '--muted': '#3d3020',
-      '--border': '#5a4a2d',
-      '--text': '#fef3c7',
-      '--subtle': '#fcd34d',
-      '--brand': '#fbbf24'
+      '--panel': '#2d2515',
+      '--muted': '#3f3522',
+      '--border': '#5c4f35',
+      '--text': '#faf5e8',
+      '--subtle': '#d4ba7f',
+      '--brand': '#f5b642'
     }
   },
 
@@ -1018,6 +1041,18 @@ const loginUI = {
       return `<div class="${className}">${emoji}</div>`;
     }).join('');
     container.innerHTML = html;
+
+    // Show/hide login button based on emoji count
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+      if (this.currentEmojiCode.length === 4) {
+        loginBtn.classList.remove('hidden');
+        loginBtn.style.display = 'block';
+      } else {
+        loginBtn.classList.add('hidden');
+        loginBtn.style.display = 'none';
+      }
+    }
   },
 
   renderEmojiGrid(containerId, mode) {
@@ -1033,11 +1068,6 @@ const loginUI = {
     if (this.currentEmojiCode.length < 4) {
       this.currentEmojiCode.push(emoji);
       this.renderEmojiDisplay('emojiCodeDisplay');
-
-      // If 4 emojis selected, validate
-      if (this.currentEmojiCode.length === 4) {
-        await this.validateLogin();
-      }
     }
   },
 
@@ -1235,7 +1265,30 @@ function avgRating(r){ return ((r.person1||0)+(r.person2||0))/2; }
 
 /* ---------- Image Upload ---------- */
 const uploadHandlers = {
-  handleImageUpload(event) {
+  config: null,
+
+  async loadConfig() {
+    if (!this.config) {
+      try {
+        this.config = await api.getConfig();
+      } catch (err) {
+        console.error('Failed to load config:', err);
+        // Use defaults
+        this.config = {
+          imageCompression: {
+            maxSizeKB: 500,
+            maxWidth: 1200,
+            quality: 0.85
+          }
+        };
+      }
+    }
+    return this.config;
+  },
+
+  async handleImageUpload(event) {
+    await this.loadConfig();
+
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -1256,7 +1309,10 @@ const uploadHandlers = {
     sizeDisplay.textContent = 'Compressing...';
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
+      const config = await this.loadConfig();
+      const maxSizeKB = config.imageCompression?.maxSizeKB || 500;
+
       // Compress the image before storing with size guarantee
       this.compressImage(e.target.result, (compressedData, finalSize) => {
         state.currentImageData = compressedData;
@@ -1271,7 +1327,7 @@ const uploadHandlers = {
         preview.classList.add('hidden');
         event.target.value = '';
         notifications.show('Error', error, 'error');
-      });
+      }, maxSizeKB);
     };
     reader.readAsDataURL(file);
   },

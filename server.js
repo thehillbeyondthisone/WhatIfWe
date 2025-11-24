@@ -18,6 +18,12 @@ const PORT = 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const PREFERENCES_FILE = path.join(__dirname, 'preferences.json');
 const BACKUP_DIR = path.join(__dirname, 'backups');
+const CONFIG_FILE = path.join(__dirname, 'config.json');
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const USE_NGROK = args.includes('--ngrok') || args.includes('--remote');
+const NGROK_REGION = args.find(arg => arg.startsWith('--region='))?.split('=')[1] || 'us';
 
 // Increase payload limit to handle base64 images (10MB)
 app.use(express.json({ limit: '10mb' }));
@@ -242,17 +248,68 @@ async function readData() {
   return JSON.parse(data);
 }
 
-// Write data (with automatic backup every 10th write)
+// Write data (with automatic backup based on config)
 let writeCounter = 0;
 async function writeData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
 
-  // Create automatic backup every 10 writes
+  // Create automatic backup based on config interval
+  const config = await readConfig();
+  const interval = config.backup?.autoBackupInterval || 10;
+
   writeCounter++;
-  if (writeCounter >= 10) {
+  if (writeCounter >= interval) {
     writeCounter = 0;
     createBackup().catch(err => console.error('Auto-backup failed:', err));
   }
+}
+
+// Initialize config file if it doesn't exist
+async function initConfigFile() {
+  try {
+    await fs.access(CONFIG_FILE);
+  } catch {
+    const defaultConfig = {
+      imageCompression: {
+        maxSizeKB: 500,
+        maxWidth: 1200,
+        quality: 0.85,
+        description: 'Image compression settings. Adjust maxSizeKB to change target file size (100-2000KB recommended)'
+      },
+      backup: {
+        autoBackupInterval: 10,
+        maxBackups: 50,
+        description: 'Backup settings. autoBackupInterval = backup every N writes, maxBackups = max backup files to keep'
+      }
+    };
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+  }
+}
+
+// Read config
+async function readConfig() {
+  try {
+    const data = await fs.readFile(CONFIG_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    // Return defaults if config file doesn't exist
+    return {
+      imageCompression: {
+        maxSizeKB: 500,
+        maxWidth: 1200,
+        quality: 0.85
+      },
+      backup: {
+        autoBackupInterval: 10,
+        maxBackups: 50
+      }
+    };
+  }
+}
+
+// Write config
+async function writeConfig(config) {
+  await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
 // Initialize preferences file if it doesn't exist
@@ -590,6 +647,36 @@ app.patch('/api/preferences/:user', async (req, res) => {
   }
 });
 
+// Configuration endpoints
+app.get('/api/config', async (req, res) => {
+  try {
+    const config = await readConfig();
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read configuration' });
+  }
+});
+
+app.patch('/api/config', async (req, res) => {
+  try {
+    const updates = req.body;
+    const config = await readConfig();
+
+    // Merge updates into config
+    if (updates.imageCompression) {
+      config.imageCompression = { ...config.imageCompression, ...updates.imageCompression };
+    }
+    if (updates.backup) {
+      config.backup = { ...config.backup, ...updates.backup };
+    }
+
+    await writeConfig(config);
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update configuration' });
+  }
+});
+
 // Backup and restore endpoints
 app.post('/api/backup/create', async (req, res) => {
   try {
@@ -683,14 +770,19 @@ function getLocalIP() {
 // Start ngrok tunnel (optional)
 async function startNgrokTunnel() {
   if (!ngrok) {
+    console.log('💡 ngrok not available - install with: npm install ngrok');
+    return null;
+  }
+
+  if (!USE_NGROK) {
     return null;
   }
 
   try {
-    console.log('🌍 Starting ngrok tunnel...');
+    console.log(`🌍 Starting ngrok tunnel (region: ${NGROK_REGION})...`);
     const url = await ngrok.connect({
       addr: PORT,
-      region: 'us'
+      region: NGROK_REGION
     });
     console.log(`✓ ngrok tunnel established: ${url}`);
     return url;
@@ -701,7 +793,7 @@ async function startNgrokTunnel() {
 }
 
 // Start server
-Promise.all([initDataFile(), initPreferencesFile()]).then(async () => {
+Promise.all([initDataFile(), initPreferencesFile(), initConfigFile()]).then(async () => {
   app.listen(PORT, '0.0.0.0', async () => {
     const ipInfo = getLocalIP();
     const localUrl = `http://${ipInfo.address}:${PORT}`;
@@ -725,7 +817,7 @@ Promise.all([initDataFile(), initPreferencesFile()]).then(async () => {
     console.log('📱 Scan with your phone:\n');
     qrcode.generate(localUrl, { small: true });
 
-    // Try to start ngrok tunnel
+    // Try to start ngrok tunnel if requested
     const ngrokUrl = await startNgrokTunnel();
     if (ngrokUrl) {
       console.log('\n' + '='.repeat(60));
@@ -736,6 +828,8 @@ Promise.all([initDataFile(), initPreferencesFile()]).then(async () => {
       console.log('⚠️  Note: ngrok free tier has session limits');
       console.log('   → Sessions expire after inactivity');
       console.log('   → URL changes on each restart\n');
+    } else if (!USE_NGROK && ngrok) {
+      console.log('\n💡 Want remote access? Restart with: npm run remote');
     }
 
     console.log('\n' + '='.repeat(60));
