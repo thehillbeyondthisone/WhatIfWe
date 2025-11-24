@@ -658,10 +658,7 @@
   <header>
     <div class="title">
       <h1>What if we…</h1>
-      <div style="display:flex; gap:8px; align-items:center">
-        <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
-        <button class="btn ghost" onclick="auth.logout()">Switch User</button>
-      </div>
+      <button class="settings-toggle" onclick="ui.toggleSettings()">⚙</button>
     </div>
     <div class="settings-panel hidden" id="settingsPanel">
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -682,9 +679,11 @@
         </div>
         <div>
           <label style="font-size:12px; color:var(--subtle); margin-bottom:4px; display:block;">Theme</label>
-          <div class="seg">
+          <div class="seg" style="display:grid; grid-template-columns:1fr 1fr; gap:0">
             <button class="active" id="themeBlue" onclick="theme.set('blue')">💙 Blue</button>
             <button id="themePink" onclick="theme.set('pink')">💕 Pink</button>
+            <button id="themeGreen" onclick="theme.set('green')">💚 Green</button>
+            <button id="themePurple" onclick="theme.set('purple')">💜 Purple</button>
           </div>
         </div>
         <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
@@ -697,6 +696,7 @@
           <option value="avg_asc">Avg rating ↑</option>
         </select>
         <button class="btn primary" onclick="ui.openForm()" style="width:100%">+ Add New Idea</button>
+        <button class="btn ghost" onclick="auth.logout()" style="width:100%; margin-top:8px">Logout</button>
       </div>
     </div>
   </header>
@@ -900,6 +900,24 @@ const theme = {
       '--text': '#e9d5ff',
       '--subtle': '#c084fc',
       '--brand': '#d946ef'
+    },
+    green: {
+      '--bg': '#0a1612',
+      '--panel': '#0f2419',
+      '--muted': '#1e3a2e',
+      '--border': '#2d5240',
+      '--text': '#d1f0e1',
+      '--subtle': '#86c7a8',
+      '--brand': '#34d399'
+    },
+    purple: {
+      '--bg': '#110a1f',
+      '--panel': '#1a0f2e',
+      '--muted': '#2d1b3d',
+      '--border': '#4a2d64',
+      '--text': '#e9d5ff',
+      '--subtle': '#a78bfa',
+      '--brand': '#8b5cf6'
     }
   },
 
@@ -907,8 +925,10 @@ const theme = {
     this.current = name || 'blue';
     this.apply(this.current);
     // Update button states
-    document.getElementById('themeBlue').classList.toggle('active', this.current === 'blue');
-    document.getElementById('themePink').classList.toggle('active', this.current === 'pink');
+    ['blue', 'pink', 'green', 'purple'].forEach(theme => {
+      const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+      if (btn) btn.classList.toggle('active', this.current === theme);
+    });
   },
 
   async set(name) {
@@ -922,8 +942,10 @@ const theme = {
     }
 
     // Update button states
-    document.getElementById('themeBlue').classList.toggle('active', name === 'blue');
-    document.getElementById('themePink').classList.toggle('active', name === 'pink');
+    ['blue', 'pink', 'green', 'purple'].forEach(theme => {
+      const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+      if (btn) btn.classList.toggle('active', name === theme);
+    });
   },
 
   apply(name) {
@@ -1144,14 +1166,26 @@ const auth = {
   },
   logout() {
     confirmDialog.show(
-      'Switch User?',
-      'Are you sure you want to log out and switch users?',
-      'Log Out',
+      'Logout?',
+      'Are you sure you want to log out?',
+      'Logout',
       () => {
+        // Clean up state
         state.user = null;
+        state.ideas = [];
+        state.query = '';
+        state.currentImageData = null;
+
+        // Close settings panel
+        const settingsPanel = document.getElementById('settingsPanel');
+        if (settingsPanel) settingsPanel.classList.add('hidden');
+
+        // Hide main app and show login screen
         document.getElementById('mainApp').classList.add('hidden');
         document.getElementById('loginScreen').classList.remove('hidden');
-        loginUI.init(); // Reinitialize login UI
+
+        // Reinitialize login UI
+        loginUI.init();
       }
     );
   },
@@ -1859,7 +1893,7 @@ const ui = {
         </div>
         <div class="ratings">
           <div class="stars" onclick="event.stopPropagation();">
-            ${stars.inline(my, n=>rate(idea.id, state.user, n))}
+            ${stars.inline(my, `async (n) => { await rate('${idea.id}', '${state.user}', n); }`)}
           </div>
           <div class="peer">${partnerRatingDisplay}</div>
         </div>
