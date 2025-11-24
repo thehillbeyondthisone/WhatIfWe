@@ -166,8 +166,22 @@ async function initPreferencesFile() {
     await fs.access(PREFERENCES_FILE);
   } catch {
     const defaultPrefs = {
-      person1: { mode: 'list', theme: 'blue', view: 'all', sort: 'date_desc' },
-      person2: { mode: 'list', theme: 'blue', view: 'all', sort: 'date_desc' }
+      person1: {
+        displayName: 'Laura',
+        emojiCode: ['💙', '🌟', '✨'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      },
+      person2: {
+        displayName: 'Boden',
+        emojiCode: ['🌈', '🎨', '💫'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      }
     };
     await fs.writeFile(PREFERENCES_FILE, JSON.stringify(defaultPrefs, null, 2));
   }
@@ -371,6 +385,51 @@ app.post('/api/ideas/bulk', async (req, res) => {
   }
 });
 
+// Get all profiles (for login screen)
+app.get('/api/profiles', async (req, res) => {
+  try {
+    const prefs = await readPreferences();
+    const profiles = {
+      person1: {
+        id: 'person1',
+        displayName: prefs.person1?.displayName || 'Partner 1'
+      },
+      person2: {
+        id: 'person2',
+        displayName: prefs.person2?.displayName || 'Partner 2'
+      }
+    };
+    res.json(profiles);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read profiles' });
+  }
+});
+
+// Validate emoji code login
+app.post('/api/auth/validate', async (req, res) => {
+  try {
+    const { user, emojiCode } = req.body;
+
+    if (!['person1', 'person2'].includes(user)) {
+      return res.status(400).json({ error: 'Invalid user' });
+    }
+
+    if (!Array.isArray(emojiCode) || emojiCode.length !== 3) {
+      return res.status(400).json({ error: 'Invalid emoji code format' });
+    }
+
+    const prefs = await readPreferences();
+    const userPrefs = prefs[user];
+    const storedCode = userPrefs?.emojiCode || [];
+
+    const isValid = JSON.stringify(emojiCode) === JSON.stringify(storedCode);
+
+    res.json({ valid: isValid });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to validate' });
+  }
+});
+
 // Get user preferences
 app.get('/api/preferences/:user', async (req, res) => {
   try {
@@ -381,7 +440,14 @@ app.get('/api/preferences/:user', async (req, res) => {
     }
 
     const prefs = await readPreferences();
-    res.json(prefs[user] || { mode: 'list', theme: 'blue', view: 'all', sort: 'date_desc' });
+    res.json(prefs[user] || {
+      displayName: 'Partner',
+      emojiCode: ['❤️', '💙', '💚'],
+      mode: 'list',
+      theme: 'blue',
+      view: 'all',
+      sort: 'date_desc'
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to read preferences' });
   }
@@ -391,7 +457,7 @@ app.get('/api/preferences/:user', async (req, res) => {
 app.patch('/api/preferences/:user', async (req, res) => {
   try {
     const { user } = req.params;
-    const { mode, theme, view, sort } = req.body;
+    const { mode, theme, view, sort, displayName, emojiCode } = req.body;
 
     if (!['person1', 'person2'].includes(user)) {
       return res.status(400).json({ error: 'Invalid user' });
@@ -400,13 +466,24 @@ app.patch('/api/preferences/:user', async (req, res) => {
     const prefs = await readPreferences();
 
     if (!prefs[user]) {
-      prefs[user] = { mode: 'list', theme: 'blue', view: 'all', sort: 'date_desc' };
+      prefs[user] = {
+        displayName: 'Partner',
+        emojiCode: ['❤️', '💙', '💚'],
+        mode: 'list',
+        theme: 'blue',
+        view: 'all',
+        sort: 'date_desc'
+      };
     }
 
     if (mode !== undefined) prefs[user].mode = mode;
     if (theme !== undefined) prefs[user].theme = theme;
     if (view !== undefined) prefs[user].view = view;
     if (sort !== undefined) prefs[user].sort = sort;
+    if (displayName !== undefined) prefs[user].displayName = displayName;
+    if (emojiCode !== undefined && Array.isArray(emojiCode) && emojiCode.length === 3) {
+      prefs[user].emojiCode = emojiCode;
+    }
 
     await writePreferences(prefs);
     res.json(prefs[user]);

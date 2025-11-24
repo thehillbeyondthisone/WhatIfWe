@@ -40,18 +40,94 @@
   .login-screen{
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     min-height:100vh; padding:20px; text-align:center;
-    background:var(--bg);
+    background:var(--bg); position:relative;
   }
-  .login-screen h1{font-size:32px; margin:0 0 10px; letter-spacing:.3px}
+  .login-screen h1{
+    font-family:'Pacifico', cursive;
+    font-size:36px; margin:0 0 10px; letter-spacing:1px;
+    color:var(--brand); font-weight:400;
+    text-shadow:
+      -1px -1px 0 #fff,
+      1px -1px 0 #fff,
+      -1px 1px 0 #fff,
+      1px 1px 0 #fff,
+      0 4px 12px rgba(0,0,0,0.5);
+  }
   .login-screen p{color:var(--subtle); margin:0 0 40px; font-size:16px}
-  .login-buttons{display:flex; flex-direction:column; gap:16px; width:100%; max-width:300px}
-  .login-btn{
-    padding:18px 24px; border:2px solid var(--brand); border-radius:12px;
+
+  .login-settings-btn{
+    position:absolute; top:20px; right:20px;
+    background:var(--panel); border:1px solid var(--border);
+    color:var(--text); padding:12px; border-radius:8px;
+    font-size:20px; cursor:pointer; transition:all 0.2s;
+  }
+  .login-settings-btn:hover{background:var(--muted)}
+
+  .login-main{width:100%; max-width:500px}
+
+  .profile-selector{display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+  .profile-card{
+    padding:24px 32px; border:2px solid var(--brand); border-radius:12px;
     background:linear-gradient(180deg, rgba(125,211,252,.1), rgba(125,211,252,.05));
-    color:var(--brand); font-size:18px; font-weight:700; cursor:pointer;
+    cursor:pointer; transition:all 0.2s; min-width:140px;
+  }
+  .profile-card:hover{transform:scale(1.05); background:rgba(125,211,252,.15)}
+  .profile-card:active{transform:scale(0.98)}
+  .profile-name{color:var(--brand); font-size:20px; font-weight:700}
+
+  .emoji-login{margin-top:20px}
+  .emoji-code-display{
+    display:flex; gap:12px; justify-content:center; margin-bottom:20px;
+    padding:16px; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; min-height:70px; align-items:center;
+  }
+  .emoji-slot{
+    width:60px; height:60px; border:2px dashed var(--border);
+    border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:32px; background:var(--muted);
+  }
+  .emoji-slot.filled{border:2px solid var(--brand); background:var(--panel)}
+
+  .emoji-grid{
+    display:grid; grid-template-columns:repeat(6, 1fr);
+    gap:10px; margin-bottom:20px; max-width:400px; margin-left:auto; margin-right:auto;
+  }
+  .emoji-grid.small{grid-template-columns:repeat(8, 1fr); gap:8px}
+  .emoji-btn{
+    width:100%; aspect-ratio:1; border:1px solid var(--border);
+    background:var(--panel); border-radius:8px; font-size:28px;
+    cursor:pointer; transition:all 0.2s; display:flex;
+    align-items:center; justify-content:center; padding:0;
+  }
+  .emoji-grid.small .emoji-btn{font-size:20px}
+  .emoji-btn:hover{transform:scale(1.1); background:var(--muted)}
+  .emoji-btn:active{transform:scale(0.95)}
+
+  .login-settings-panel{
+    position:fixed; inset:0; background:var(--bg);
+    z-index:200; display:flex; flex-direction:column;
+    padding:20px; overflow-y:auto;
+  }
+  .settings-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);
+  }
+  .settings-header h2{margin:0; color:var(--brand); font-size:24px}
+  .settings-content{max-width:500px; margin:0 auto; width:100%}
+
+  .profile-config{margin-bottom:32px}
+  .profile-config h3{color:var(--text); margin:0 0 20px; font-size:20px}
+
+  .profile-tabs{
+    display:flex; gap:8px; background:var(--panel);
+    border:1px solid var(--border); border-radius:8px; overflow:hidden;
+  }
+  .profile-tab{
+    flex:1; border:0; background:transparent; color:var(--subtle);
+    padding:12px; cursor:pointer; font-weight:600; font-size:14px;
     transition:all 0.2s;
   }
-  .login-btn:active{transform:scale(0.98); background:var(--brand); color:#0b1020}
+  .profile-tab.active{background:var(--brand); color:#0b1020}
 
   /* Settings Menu */
   .settings-toggle{
@@ -488,6 +564,13 @@
   .notification-title{font-weight:700; color:var(--brand); margin-bottom:6px; font-size:15px}
   .notification-body{font-size:14px; color:var(--text)}
 
+  /* Animations */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+
   /* Utility */
   .hidden{display:none !important}
   .grow{flex:1}
@@ -496,11 +579,55 @@
 <body>
 <!-- Login Screen -->
 <div id="loginScreen" class="login-screen hidden">
-  <h1>What if we…</h1>
-  <p>Choose your profile to continue</p>
-  <div class="login-buttons">
-    <button class="login-btn" onclick="auth.login('person1')">Laura</button>
-    <button class="login-btn" onclick="auth.login('person2')">Boden</button>
+  <button class="login-settings-btn" onclick="loginUI.openSettings()">⚙</button>
+
+  <div id="loginMain" class="login-main">
+    <h1>What if we…</h1>
+    <p id="loginSubtitle">Tap your emoji code to continue</p>
+
+    <div class="profile-selector">
+      <button class="profile-card" id="profileBtn1" onclick="loginUI.selectProfile('person1')">
+        <div class="profile-name" id="profileName1">Partner 1</div>
+      </button>
+      <button class="profile-card" id="profileBtn2" onclick="loginUI.selectProfile('person2')">
+        <div class="profile-name" id="profileName2">Partner 2</div>
+      </button>
+    </div>
+
+    <div class="emoji-login hidden" id="emojiLogin">
+      <div class="emoji-code-display" id="emojiCodeDisplay"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+      <button class="btn" onclick="loginUI.backToProfiles()">← Back</button>
+    </div>
+  </div>
+
+  <!-- Login Settings Panel -->
+  <div class="login-settings-panel hidden" id="loginSettingsPanel">
+    <div class="settings-header">
+      <h2>Profile Settings</h2>
+      <button class="btn ghost" onclick="loginUI.closeSettings()">✕</button>
+    </div>
+    <div class="settings-content">
+      <div class="profile-config">
+        <h3 id="configProfileName">Partner 1</h3>
+        <div class="f">
+          <div>
+            <label>Display Name</label>
+            <input type="text" id="configName" class="field" placeholder="Enter name">
+          </div>
+          <div>
+            <label>Emoji Code (tap 3 emojis in order)</label>
+            <div class="emoji-code-display" id="configEmojiDisplay"></div>
+            <div class="emoji-grid small" id="configEmojiGrid"></div>
+          </div>
+          <button class="btn primary" onclick="loginUI.saveProfile()">Save Changes</button>
+        </div>
+      </div>
+      <div class="profile-tabs">
+        <button class="profile-tab active" onclick="loginUI.configProfile('person1')">Partner 1</button>
+        <button class="profile-tab" onclick="loginUI.configProfile('person2')">Partner 2</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -684,6 +811,18 @@ const api = {
       body: JSON.stringify(prefs)
     });
     return res.json();
+  },
+  async getProfiles(){
+    const res = await fetch('/api/profiles');
+    return res.json();
+  },
+  async validateEmojiCode(user, emojiCode){
+    const res = await fetch('/api/auth/validate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ user, emojiCode })
+    });
+    return res.json();
   }
 };
 
@@ -755,6 +894,184 @@ const theme = {
     Object.entries(colors).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
+  }
+};
+
+/* ---------- Login UI ---------- */
+const loginUI = {
+  selectedUser: null,
+  currentEmojiCode: [],
+  configUser: 'person1',
+  configCode: [],
+  availableEmojis: ['❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '💗', '🌟', '✨', '⭐', '💫', '🌙', '☀️', '🌈', '🔥', '💎', '👑', '🎨', '🎭', '🎪', '🎯', '🎸', '🎵'],
+
+  async init() {
+    try {
+      const profiles = await api.getProfiles();
+      document.getElementById('profileName1').textContent = profiles.person1.displayName;
+      document.getElementById('profileName2').textContent = profiles.person2.displayName;
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+    }
+  },
+
+  selectProfile(user) {
+    this.selectedUser = user;
+    this.currentEmojiCode = [];
+
+    // Hide profile selector, show emoji login
+    document.querySelector('.profile-selector').classList.add('hidden');
+    document.getElementById('emojiLogin').classList.remove('hidden');
+    document.getElementById('loginSubtitle').textContent = `Enter your emoji code`;
+
+    // Render emoji grid and display
+    this.renderEmojiDisplay('emojiCodeDisplay');
+    this.renderEmojiGrid('emojiGrid', 'login');
+  },
+
+  renderEmojiDisplay(containerId) {
+    const container = document.getElementById(containerId);
+    const html = Array.from({length: 3}, (_, i) => {
+      const emoji = this.currentEmojiCode[i] || '';
+      const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
+      return `<div class="${className}">${emoji}</div>`;
+    }).join('');
+    container.innerHTML = html;
+  },
+
+  renderEmojiGrid(containerId, mode) {
+    const container = document.getElementById(containerId);
+    const clickHandler = mode === 'login' ? 'loginUI.addEmoji' : 'loginUI.addConfigEmoji';
+    const html = this.availableEmojis.map(emoji =>
+      `<button class="emoji-btn" onclick="${clickHandler}('${emoji}')">${emoji}</button>`
+    ).join('');
+    container.innerHTML = html;
+  },
+
+  async addEmoji(emoji) {
+    if (this.currentEmojiCode.length < 3) {
+      this.currentEmojiCode.push(emoji);
+      this.renderEmojiDisplay('emojiCodeDisplay');
+
+      // If 3 emojis selected, validate
+      if (this.currentEmojiCode.length === 3) {
+        await this.validateLogin();
+      }
+    }
+  },
+
+  async validateLogin() {
+    try {
+      const result = await api.validateEmojiCode(this.selectedUser, this.currentEmojiCode);
+
+      if (result.valid) {
+        // Success! Login
+        await auth.login(this.selectedUser);
+      } else {
+        // Wrong code - shake and reset
+        const display = document.getElementById('emojiCodeDisplay');
+        display.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          display.style.animation = '';
+          this.currentEmojiCode = [];
+          this.renderEmojiDisplay('emojiCodeDisplay');
+        }, 500);
+      }
+    } catch (err) {
+      console.error('Login validation failed:', err);
+      this.currentEmojiCode = [];
+      this.renderEmojiDisplay('emojiCodeDisplay');
+    }
+  },
+
+  backToProfiles() {
+    this.selectedUser = null;
+    this.currentEmojiCode = [];
+    document.querySelector('.profile-selector').classList.remove('hidden');
+    document.getElementById('emojiLogin').classList.add('hidden');
+    document.getElementById('loginSubtitle').textContent = 'Tap your emoji code to continue';
+  },
+
+  async openSettings() {
+    document.getElementById('loginSettingsPanel').classList.remove('hidden');
+    await this.configProfile('person1');
+  },
+
+  closeSettings() {
+    document.getElementById('loginSettingsPanel').classList.add('hidden');
+    this.init(); // Reload profile names
+  },
+
+  async configProfile(user) {
+    this.configUser = user;
+    this.configCode = [];
+
+    // Update active tab
+    document.querySelectorAll('.profile-tab').forEach((tab, i) => {
+      tab.classList.toggle('active', (i === 0 && user === 'person1') || (i === 1 && user === 'person2'));
+    });
+
+    try {
+      const prefs = await api.getPreferences(user);
+      this.configCode = prefs.emojiCode || [];
+
+      document.getElementById('configProfileName').textContent = prefs.displayName || 'Partner';
+      document.getElementById('configName').value = prefs.displayName || '';
+
+      this.renderConfigEmojiDisplay();
+      this.renderEmojiGrid('configEmojiGrid', 'config');
+    } catch (err) {
+      console.error('Failed to load config:', err);
+    }
+  },
+
+  renderConfigEmojiDisplay() {
+    const container = document.getElementById('configEmojiDisplay');
+    const html = Array.from({length: 3}, (_, i) => {
+      const emoji = this.configCode[i] || '';
+      const className = emoji ? 'emoji-slot filled' : 'emoji-slot';
+      return `<div class="${className}" onclick="loginUI.removeConfigEmoji(${i})">${emoji}</div>`;
+    }).join('');
+    container.innerHTML = html;
+  },
+
+  addConfigEmoji(emoji) {
+    if (this.configCode.length < 3) {
+      this.configCode.push(emoji);
+      this.renderConfigEmojiDisplay();
+    }
+  },
+
+  removeConfigEmoji(index) {
+    this.configCode.splice(index, 1);
+    this.renderConfigEmojiDisplay();
+  },
+
+  async saveProfile() {
+    const displayName = document.getElementById('configName').value.trim();
+
+    if (!displayName) {
+      alert('Please enter a display name');
+      return;
+    }
+
+    if (this.configCode.length !== 3) {
+      alert('Please select exactly 3 emojis for your code');
+      return;
+    }
+
+    try {
+      await api.updatePreferences(this.configUser, {
+        displayName,
+        emojiCode: this.configCode
+      });
+
+      notifications.show('Saved!', `Profile updated for ${displayName}`);
+      this.closeSettings();
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      alert('Failed to save profile');
+    }
   }
 };
 
@@ -1566,6 +1883,7 @@ document.getElementById('q').addEventListener('keydown', e=>{
 (async function init(){
   auth.checkLogin();
   carousel.init();
+  await loginUI.init();
 })();
 </script>
 </body>
