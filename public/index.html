@@ -683,7 +683,7 @@
             <button class="active" id="themeBlue" onclick="theme.set('blue')">💙 Blue</button>
             <button id="themePink" onclick="theme.set('pink')">💕 Pink</button>
             <button id="themeGreen" onclick="theme.set('green')">💚 Green</button>
-            <button id="themePurple" onclick="theme.set('purple')">💜 Purple</button>
+            <button id="themeYellow" onclick="theme.set('yellow')">💛 Yellow</button>
           </div>
         </div>
         <input class="field" id="q" placeholder="Search…" oninput="ui.renderCurrent()">
@@ -910,14 +910,14 @@ const theme = {
       '--subtle': '#86c7a8',
       '--brand': '#34d399'
     },
-    purple: {
-      '--bg': '#110a1f',
-      '--panel': '#1a0f2e',
-      '--muted': '#2d1b3d',
-      '--border': '#4a2d64',
-      '--text': '#e9d5ff',
-      '--subtle': '#a78bfa',
-      '--brand': '#8b5cf6'
+    yellow: {
+      '--bg': '#1a1508',
+      '--panel': '#2a2010',
+      '--muted': '#3d3020',
+      '--border': '#5a4a2d',
+      '--text': '#fef3c7',
+      '--subtle': '#fcd34d',
+      '--brand': '#fbbf24'
     }
   },
 
@@ -925,7 +925,7 @@ const theme = {
     this.current = name || 'blue';
     this.apply(this.current);
     // Update button states
-    ['blue', 'pink', 'green', 'purple'].forEach(theme => {
+    ['blue', 'pink', 'green', 'yellow'].forEach(theme => {
       const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
       if (btn) btn.classList.toggle('active', this.current === theme);
     });
@@ -942,7 +942,7 @@ const theme = {
     }
 
     // Update button states
-    ['blue', 'pink', 'green', 'purple'].forEach(theme => {
+    ['blue', 'pink', 'green', 'yellow'].forEach(theme => {
       const btn = document.getElementById(`theme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
       if (btn) btn.classList.toggle('active', name === theme);
     });
@@ -2156,35 +2156,63 @@ document.getElementById('q').addEventListener('keydown', e=>{
 // Pull-to-refresh functionality
 function initPullToRefresh() {
   let touchStartY = 0;
-  let touchEndY = 0;
   let isPulling = false;
+  let isRefreshing = false;
+  let lastRefreshTime = 0;
+  const REFRESH_COOLDOWN = 3000; // 3 second cooldown between refreshes
 
   const mainApp = document.getElementById('mainApp');
 
   mainApp.addEventListener('touchstart', (e) => {
+    // Reset pulling state on new touch
     touchStartY = e.touches[0].clientY;
+    isPulling = false;
   }, { passive: true });
 
   mainApp.addEventListener('touchmove', (e) => {
-    touchEndY = e.touches[0].clientY;
-    const scrollTop = mainApp.scrollTop || window.pageYOffset;
+    // Don't trigger if already refreshing or in cooldown
+    if (isRefreshing || Date.now() - lastRefreshTime < REFRESH_COOLDOWN) {
+      return;
+    }
 
-    // Only trigger if at top of page and pulling down
-    if (scrollTop === 0 && touchEndY > touchStartY + 50) {
+    const touchCurrentY = e.touches[0].clientY;
+    const pullDistance = touchCurrentY - touchStartY;
+
+    // Check scroll position - need to check both window and grid container
+    const grid = document.getElementById('grid');
+    const swipeContainer = document.getElementById('swipeContainer');
+    const activeContainer = state.mode === 'list' ? grid : swipeContainer;
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop ||
+                     activeContainer?.scrollTop || 0;
+
+    // Only trigger if at top of page, pulling down significantly, and user is logged in
+    if (scrollTop <= 10 && pullDistance > 80 && state.user) {
       isPulling = true;
     }
   }, { passive: true });
 
   mainApp.addEventListener('touchend', async () => {
-    if (isPulling && state.user) {
+    if (isPulling && !isRefreshing && state.user) {
       isPulling = false;
+      isRefreshing = true;
+      lastRefreshTime = Date.now();
+
       notifications.show('Refreshing', 'Loading latest ideas...', 'info', 2000);
-      await loadIdeas();
-      if (state.mode === 'swipe') {
-        ui.renderSwipe();
-      } else {
-        ui.render();
+
+      try {
+        await loadIdeas();
+        if (state.mode === 'swipe') {
+          ui.renderSwipe();
+        } else {
+          ui.render();
+        }
+      } finally {
+        isRefreshing = false;
       }
+    } else {
+      // Reset pulling state if we didn't refresh
+      isPulling = false;
     }
   });
 }
