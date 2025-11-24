@@ -672,6 +672,18 @@ const api = {
       body: JSON.stringify({ ideas })
     });
     return res.json();
+  },
+  async getPreferences(user){
+    const res = await fetch(`/api/preferences/${user}`);
+    return res.json();
+  },
+  async updatePreferences(user, prefs){
+    const res = await fetch(`/api/preferences/${user}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(prefs)
+    });
+    return res.json();
   }
 };
 
@@ -681,7 +693,7 @@ const state = {
   query:'',
   sort:'date_desc',
   view: 'all',
-  mode: 'swipe', // 'swipe' or 'list'
+  mode: 'list', // 'swipe' or 'list'
   currentImageData: null, // Base64 image data from upload
   lastSeenIdeas: JSON.parse(localStorage.getItem('lastSeenIdeas') || '[]'),
   currentIndex: 0 // Current card index in carousel
@@ -689,7 +701,7 @@ const state = {
 
 /* ---------- Theme System ---------- */
 const theme = {
-  current: localStorage.getItem('theme') || 'blue',
+  current: 'blue',
 
   themes: {
     blue: {
@@ -712,15 +724,23 @@ const theme = {
     }
   },
 
-  init() {
+  init(name) {
+    this.current = name || 'blue';
     this.apply(this.current);
+    // Update button states
+    document.getElementById('themeBlue').classList.toggle('active', this.current === 'blue');
+    document.getElementById('themePink').classList.toggle('active', this.current === 'pink');
   },
 
-  set(name) {
+  async set(name) {
     if (!this.themes[name]) return;
     this.current = name;
-    localStorage.setItem('theme', name);
     this.apply(name);
+
+    // Save to server
+    if (state.user) {
+      await api.updatePreferences(state.user, { theme: name });
+    }
 
     // Update button states
     document.getElementById('themeBlue').classList.toggle('active', name === 'blue');
@@ -740,29 +760,48 @@ const theme = {
 
 /* ---------- Authentication ---------- */
 const auth = {
-  login(user) {
+  async login(user) {
     state.user = user;
-    localStorage.setItem('loggedInUser', user);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
 
-    loadIdeas().then(() => {
-      if (state.mode === 'swipe') {
-        ui.renderSwipe();
-      } else {
-        ui.render();
-      }
-    });
+    // Load user preferences from server
+    try {
+      const prefs = await api.getPreferences(user);
+
+      // Apply preferences to state
+      state.mode = prefs.mode || 'list';
+      state.view = prefs.view || 'all';
+      state.sort = prefs.sort || 'date_desc';
+
+      // Apply theme
+      theme.init(prefs.theme || 'blue');
+
+      // Update UI controls
+      document.getElementById('sort').value = state.sort;
+      ui.setMode(state.mode, true); // Skip save on initial load
+      ui.setView(state.view, true); // Skip save on initial load
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+      // Use defaults if preferences fail to load
+      theme.init('blue');
+    }
+
+    // Load ideas and render
+    await loadIdeas();
+    if (state.mode === 'swipe') {
+      ui.renderSwipe();
+    } else {
+      ui.render();
+    }
   },
   logout() {
     state.user = null;
-    localStorage.removeItem('loggedInUser');
     document.getElementById('mainApp').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
   },
   checkLogin() {
     // Always show login screen on refresh
-    localStorage.removeItem('loggedInUser');
     document.getElementById('loginScreen').classList.remove('hidden');
   }
 };
@@ -1029,7 +1068,7 @@ const ui = {
       this.render();
     }
   },
-  setMode(m){
+  async setMode(m, skipSave = false){
     state.mode = m;
     document.getElementById('modeSwipe').classList.toggle('active', m==='swipe');
     document.getElementById('modeList').classList.toggle('active', m==='list');
@@ -1037,17 +1076,27 @@ const ui = {
     document.getElementById('swipeContainer').classList.toggle('hidden', m!=='swipe');
     document.getElementById('grid').classList.toggle('hidden', m!=='list');
 
+    // Save to server
+    if (!skipSave && state.user) {
+      await api.updatePreferences(state.user, { mode: m });
+    }
+
     if (m === 'swipe') {
       this.renderSwipe();
     } else {
       this.render();
     }
   },
-  setView(v){
+  async setView(v, skipSave = false){
     state.view = v;
     document.getElementById('viewAll').classList.toggle('active', v==='all');
     document.getElementById('viewDeclined').classList.toggle('active', v==='declined');
     document.getElementById('viewWould').classList.toggle('active', v==='would');
+
+    // Save to server
+    if (!skipSave && state.user) {
+      await api.updatePreferences(state.user, { view: v });
+    }
 
     if (state.mode === 'swipe') {
       this.renderSwipe();
@@ -1147,9 +1196,15 @@ const ui = {
     }).join('');
     container.innerHTML = html;
   },
-  render(){
+  async render(){
     state.query = document.getElementById('q').value || '';
-    state.sort  = document.getElementById('sort').value;
+    const newSort = document.getElementById('sort').value;
+
+    // Save sort preference if it changed
+    if (newSort !== state.sort && state.user) {
+      await api.updatePreferences(state.user, { sort: newSort });
+    }
+    state.sort = newSort;
 
     const grid = document.getElementById('grid');
     const list = filters.apply(state.ideas);
@@ -1254,15 +1309,14 @@ const ui = {
         <img data-id="${idea.id}" src="${esc(thumb)}" alt="" />
         ${wouldBadge}
         ${didBadge}
-        ${idea.videoUrl ? `<span class="badge">Video</span>` : `<span class="badge">Image</span>`}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
-        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">⚙</button>
       </div>` : `
       <div class="media">
         ${wouldBadge}
         ${didBadge}
         ${isUnrated ? `<span class="new-badge">UNRATED</span>` : ''}
-        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
+        <button class="edit" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">⚙</button>
       </div>`;
 
     // Buttons for declined view
@@ -1270,13 +1324,11 @@ const ui = {
       <div class="row-actions">
         <button class="btn primary" onclick="event.stopPropagation(); formHandlers.restore('${idea.id}')">Restore to All Ideas</button>
       </div>
-    ` : `
+    ` : idea.videoUrl ? `
       <div class="row-actions">
-        <button class="btn" onclick="event.stopPropagation(); ui.openForm('${idea.id}')">Edit</button>
-        <div class="grow"></div>
-        ${idea.videoUrl ? `<a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">Video</a>` : ''}
+        <a class="btn" href="${esc(idea.videoUrl)}" target="_blank" onclick="event.stopPropagation();">🎥 Watch Video</a>
       </div>
-    `;
+    ` : '';
 
     return `
       <article class="card" onclick="ui.openDetail('${idea.id}')">
@@ -1512,13 +1564,8 @@ document.getElementById('q').addEventListener('keydown', e=>{
 });
 
 (async function init(){
-  theme.init();
   auth.checkLogin();
   carousel.init();
-
-  // Update theme button states
-  document.getElementById('themeBlue').classList.toggle('active', theme.current === 'blue');
-  document.getElementById('themePink').classList.toggle('active', theme.current === 'pink');
 })();
 </script>
 </body>
