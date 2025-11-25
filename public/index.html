@@ -1884,8 +1884,8 @@ const ui = {
     // Check if this is a "Would" item (both rated 3+)
     const isWould = myRating >= 3 && theirRating >= 3;
 
-    // Show partner's rating if they rated 3+
-    const showPartnerRating = theirRating >= 3;
+    // Show partner's rating ONLY if BOTH rated it 3 or higher (same as list view)
+    const showPartnerRating = isWould;
     const partnerRatingHtml = showPartnerRating ? `
       <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:12px; color:var(--subtle);">
         <strong>${users[otherUser]}</strong>: ${'💖'.repeat(theirRating)}${'🤍'.repeat(5-theirRating)}
