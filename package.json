@@ -6,13 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "remote": "node server.js --ngrok",
-    "remote:eu": "node server.js --ngrok --region=eu",
-    "remote:ap": "node server.js --ngrok --region=ap",
-    "remote:au": "node server.js --ngrok --region=au",
-    "remote:sa": "node server.js --ngrok --region=sa",
-    "remote:jp": "node server.js --ngrok --region=jp",
-    "remote:in": "node server.js --ngrok --region=in"
+    "remote": "node server.js --ngrok"
   },
   "keywords": [
     "date",

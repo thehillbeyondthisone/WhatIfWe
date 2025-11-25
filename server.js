@@ -24,7 +24,6 @@ const NGROK_CONFIG_FILE = path.join(__dirname, 'ngrok.config.json');
 // Parse command line arguments
 const args = process.argv.slice(2);
 const USE_NGROK = args.includes('--ngrok') || args.includes('--remote');
-const NGROK_REGION = args.find(arg => arg.startsWith('--region='))?.split('=')[1] || 'us';
 
 // Increase payload limit to handle base64 images (10MB)
 app.use(express.json({ limit: '10mb' }));
@@ -781,8 +780,7 @@ async function readNgrokConfig() {
 // Create default ngrok config file
 async function createDefaultNgrokConfig() {
   const defaultConfig = {
-    authtoken: "",
-    region: "us"
+    authtoken: ""
   };
   await fs.writeFile(NGROK_CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
   console.log(`\n📝 Created ngrok.config.json`);
@@ -801,7 +799,7 @@ async function startNgrokTunnel() {
   }
 
   try {
-    console.log(`🌍 Starting ngrok tunnel (region: ${NGROK_REGION})...`);
+    console.log(`🌍 Starting ngrok tunnel...`);
 
     // Try to load local ngrok config
     let ngrokConfig = await readNgrokConfig();
@@ -811,27 +809,15 @@ async function startNgrokTunnel() {
     // 2. Local ngrok.config.json file
     // 3. System ngrok config (handled by ngrok library automatically)
 
-    let options;
+    let options = { addr: PORT };
 
     if (process.env.NGROK_AUTHTOKEN) {
-      options = {
-        addr: PORT,
-        authtoken: process.env.NGROK_AUTHTOKEN,
-        region: NGROK_REGION
-      };
+      options.authtoken = process.env.NGROK_AUTHTOKEN;
       console.log('   Using authtoken from NGROK_AUTHTOKEN environment variable');
-      console.log(`   Region: ${NGROK_REGION}`);
     } else if (ngrokConfig && ngrokConfig.authtoken && ngrokConfig.authtoken.trim()) {
-      options = {
-        addr: PORT,
-        authtoken: ngrokConfig.authtoken.trim(),
-        region: ngrokConfig.region || NGROK_REGION
-      };
+      options.authtoken = ngrokConfig.authtoken.trim();
       console.log('   Using authtoken from ngrok.config.json');
-      console.log(`   Region: ${ngrokConfig.region || NGROK_REGION}`);
     } else {
-      // Use system config - only pass port, let ngrok handle everything else
-      options = { addr: PORT };
       console.log('   Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
     }
 
@@ -850,10 +836,11 @@ async function startNgrokTunnel() {
     console.log('   npm run remote');
     console.log('\nOption 2: Use ngrok.config.json file');
     console.log('   Create/edit ngrok.config.json with:');
-    console.log('   { "authtoken": "your_token_here", "region": "us" }');
-    console.log('\nOption 3: Use system ngrok config');
+    console.log('   { "authtoken": "your_token_here" }');
+    console.log('\nOption 3: Use system ngrok config (easiest if already configured)');
     console.log('   ngrok config add-authtoken YOUR_TOKEN');
     console.log('   This saves to ~/.ngrok2/ngrok.yml or %USERPROFILE%\\.ngrok2\\ngrok.yml');
+    console.log('   Then just run: npm run remote (no config file needed!)');
     console.log('\nGet your authtoken: https://dashboard.ngrok.com/get-started/your-authtoken');
     console.log('='.repeat(60) + '\n');
 
