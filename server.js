@@ -831,13 +831,13 @@ async function startNgrokTunnel() {
 
     console.log(`\n🔍 DEBUG: ngrok.connect() options:`, JSON.stringify(options, null, 2));
 
-    // Disconnect any existing tunnels first
-    console.log(`🔍 DEBUG: Disconnecting any existing tunnels...`);
+    // Kill any existing ngrok process first
+    console.log(`🔍 DEBUG: Killing any existing ngrok process...`);
     try {
-      await ngrok.disconnect();
-      console.log(`   ✓ Cleared existing tunnels`);
+      await ngrok.kill();
+      console.log(`   ✓ Killed existing ngrok process`);
     } catch (e) {
-      console.log(`   ℹ No existing tunnels to clear`);
+      console.log(`   ℹ No existing ngrok process to kill`);
     }
 
     console.log(`🔍 DEBUG: Attempting connection...\n`);
