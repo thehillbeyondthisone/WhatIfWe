@@ -24,10 +24,38 @@ const NGROK_CONFIG_FILE = path.join(__dirname, 'ngrok.config.json');
 // Parse command line arguments
 const args = process.argv.slice(2);
 const USE_NGROK = args.includes('--ngrok') || args.includes('--remote');
+const VERBOSE = args.includes('--verbose') || args.includes('-v');
 
 // Increase payload limit to handle base64 images (10MB)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Verbose logging middleware (enabled with --verbose or -v flag)
+if (VERBOSE) {
+  app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const method = req.method;
+    const path = req.originalUrl || req.url;
+
+    console.log(`\n📊 [${timestamp}]`);
+    console.log(`   ${method} ${path}`);
+    console.log(`   IP: ${ip}`);
+    console.log(`   User-Agent: ${userAgent}`);
+
+    // Log response status after request completes
+    const originalSend = res.send;
+    res.send = function(data) {
+      console.log(`   Response: ${res.statusCode}`);
+      return originalSend.apply(res, arguments);
+    };
+
+    next();
+  });
+  console.log('🔍 Verbose logging enabled\n');
+}
+
 app.use(express.static('public'));
 
 // Ensure backup directory exists
@@ -800,13 +828,9 @@ async function startNgrokTunnel() {
 
   try {
     console.log(`🌍 Starting ngrok tunnel...`);
-    console.log(`\n🔍 DEBUG: Checking ngrok configuration sources...`);
 
     // Try to load local ngrok config
     let ngrokConfig = await readNgrokConfig();
-
-    console.log(`🔍 DEBUG: ngrok.config.json contents:`, ngrokConfig);
-    console.log(`🔍 DEBUG: NGROK_AUTHTOKEN env var:`, process.env.NGROK_AUTHTOKEN ? 'SET' : 'NOT SET');
 
     // Priority order for authtoken:
     // 1. Environment variable NGROK_AUTHTOKEN
@@ -817,39 +841,27 @@ async function startNgrokTunnel() {
 
     if (process.env.NGROK_AUTHTOKEN) {
       options.authtoken = process.env.NGROK_AUTHTOKEN;
-      console.log('   ✓ Using authtoken from NGROK_AUTHTOKEN environment variable');
-      console.log(`   🔍 DEBUG: Token length: ${options.authtoken.length} chars`);
+      console.log('   Using authtoken from environment variable');
     } else if (ngrokConfig && ngrokConfig.authtoken && ngrokConfig.authtoken.trim()) {
       options.authtoken = ngrokConfig.authtoken.trim();
-      console.log('   ✓ Using authtoken from ngrok.config.json');
-      console.log(`   🔍 DEBUG: Token length: ${options.authtoken.length} chars`);
-      console.log(`   🔍 DEBUG: Token starts with: ${options.authtoken.substring(0, 10)}...`);
+      console.log('   Using authtoken from ngrok.config.json');
     } else {
-      console.log('   ✓ Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
-      console.log('   🔍 DEBUG: No authtoken in config file or env var');
+      console.log('   Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
     }
 
-    console.log(`\n🔍 DEBUG: ngrok.connect() options:`, JSON.stringify(options, null, 2));
-
-    // Kill any existing ngrok process first
-    console.log(`🔍 DEBUG: Killing any existing ngrok process...`);
+    // Kill any existing ngrok process first to avoid conflicts
     try {
       await ngrok.kill();
-      console.log(`   ✓ Killed existing ngrok process`);
     } catch (e) {
-      console.log(`   ℹ No existing ngrok process to kill`);
+      // Ignore - no existing process
     }
-
-    console.log(`🔍 DEBUG: Attempting connection...\n`);
 
     const url = await ngrok.connect(options);
     console.log(`✓ ngrok tunnel established: ${url}`);
     return url;
   } catch (error) {
-    console.error('⚠️  ngrok tunnel failed!');
-    console.error('🔍 DEBUG: Full error object:', error);
-    console.error('🔍 DEBUG: Error message:', error.message);
-    console.error('🔍 DEBUG: Error stack:', error.stack);
+    console.error('⚠️  ngrok tunnel failed:', error.message);
+    console.error('   Note: ngrok setup is optional - tabled for later troubleshooting');
 
     // Provide helpful setup instructions
     console.log('\n' + '='.repeat(60));

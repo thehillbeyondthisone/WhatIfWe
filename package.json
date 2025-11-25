@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "remote": "node server.js --ngrok"
+    "remote": "node server.js --ngrok",
+    "verbose": "node server.js --verbose"
   },
   "keywords": [
     "date",
