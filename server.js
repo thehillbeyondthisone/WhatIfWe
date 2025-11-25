@@ -830,6 +830,16 @@ async function startNgrokTunnel() {
     }
 
     console.log(`\n🔍 DEBUG: ngrok.connect() options:`, JSON.stringify(options, null, 2));
+
+    // Disconnect any existing tunnels first
+    console.log(`🔍 DEBUG: Disconnecting any existing tunnels...`);
+    try {
+      await ngrok.disconnect();
+      console.log(`   ✓ Cleared existing tunnels`);
+    } catch (e) {
+      console.log(`   ℹ No existing tunnels to clear`);
+    }
+
     console.log(`🔍 DEBUG: Attempting connection...\n`);
 
     const url = await ngrok.connect(options);
