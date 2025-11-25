@@ -4,150 +4,236 @@
 
 ### Step 1: Install Node.js
 - Go to https://nodejs.org
-- Download the LTS version
+- Download the LTS version (v16 or newer)
 - Install it
 
-### Step 2: Setup
+### Step 2: Setup & Start
+
 ```bash
-# Open terminal/command prompt in the whatifwe-app folder
+# Navigate to the app folder
+cd WhatIfWe
+
+# Install dependencies (first time only)
 npm install
-npm start
+
+# Start the server - choose one:
+npm start              # Normal mode (recommended)
+npm run verbose        # Verbose mode (logs all connections)
 ```
 
-You should see:
+**What's the difference?**
+
+**Normal mode** (`npm start`):
 ```
 ✨ What if we… is running!
 
-📱 Access from this device: http://localhost:3000
-📱 Access from other devices: http://YOUR_LOCAL_IP:3000
+📱 On this computer: http://localhost:3000
+🌐 On same network:  http://192.168.1.100:3000
+
+📱 Scan with your phone:
+[QR CODE appears here]
 ```
 
-### Step 3: Find Your IP Address
-
-**Windows:**
-```cmd
-ipconfig
+**Verbose mode** (`npm run verbose`):
 ```
-Look for "IPv4 Address" → something like `192.168.1.100`
+🔍 Verbose logging enabled
 
-**Mac/Linux:**
+✨ What if we… is running!
+[Same output as above, PLUS detailed logs for every connection:]
+
+📊 [2025-11-25T01:30:45.123Z]
+   GET /
+   IP: 192.168.1.105
+   User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_0...)
+   Response: 200
+
+📊 [2025-11-25T01:30:46.456Z]
+   POST /api/auth/validate
+   IP: 192.168.1.105
+   User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_0...)
+   Response: 200
+```
+
+**Use verbose mode when:**
+- Debugging connection issues
+- Monitoring who's accessing the app
+- Troubleshooting network problems
+- Learning how the app works
+
+**Use normal mode when:**
+- Just using the app normally
+- You don't need detailed logs
+- Cleaner console output
+
+### Step 3: Access from Your Devices
+
+The server automatically detects your local IP. You'll see it in the output.
+
+**From the same computer:**
+```
+http://localhost:3000
+```
+
+**From phones/tablets on same WiFi:**
+```
+http://192.168.1.XXX:3000
+```
+*(Use the exact IP shown in your server output)*
+
+**Quick phone access:**
+- Just scan the QR code shown in the terminal!
+
+### Step 4: First Time Login
+
+1. Open the app on your phone
+2. You'll see 24 playful emojis
+3. **Partner 1:** Tap 4 emojis to create your code (e.g., 😍🔥🌈✨)
+4. Tap the "Login" button that appears
+5. **Partner 2:** Create a different 4-emoji code (e.g., 🍕🎉🚀💎)
+6. Tap "Login"
+
+**From now on:**
+- Just enter your 4 emojis and tap Login
+- The app knows which partner you are
+- Each partner has their own theme and settings
+
+### Step 5: Start Adding Date Ideas
+
+1. Tap the **"+"** button
+2. Enter description: *"Try that new ramen place"*
+3. Add a YouTube video or photo (optional)
+4. Save!
+5. Rate it with hearts (1-5)
+
+## Remote Access (Optional)
+
+Want to access from anywhere, not just same WiFi?
+
+### Built-in Remote Access (Experimental)
+
 ```bash
-ifconfig
-# or
-ip addr
+npm run remote
 ```
-Look for "inet" → something like `192.168.1.100`
 
-### Step 4: Access from Phones
+This attempts to use ngrok for remote access. **Note:** Currently tabled for troubleshooting - local network is recommended.
 
-**Option A: Local Network (Same WiFi)**
-1. Connect both phones to same WiFi
-2. Open browser
-3. Go to: `http://YOUR_IP:3000`
-   - Example: `http://192.168.1.100:3000`
+### Alternative: Cloudflare Tunnel (Recommended)
 
-**Option B: Cloudflare Tunnel (Anywhere, No Port Forwarding)**
+Free, no signup required, works anywhere:
 
-Perfect for accessing from different networks without exposing your IP!
+```bash
+# Install cloudflared first (one-time):
+# Windows: choco install cloudflared
+# Mac: brew install cloudflare/cloudflare/cloudflared
+# Linux: Download from cloudflare.com
 
-1. Install Cloudflare Tunnel:
-   ```bash
-   # Download from: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
-   # Or use package manager:
+# Then run:
+cloudflared tunnel --url http://localhost:3000
+```
 
-   # Mac (Homebrew)
-   brew install cloudflare/cloudflare/cloudflared
+Copy the `https://` URL it shows and share with your partner!
 
-   # Windows (Chocolatey)
-   choco install cloudflared
+## Combining Flags
 
-   # Linux
-   wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-   chmod +x cloudflared-linux-amd64
-   sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
-   ```
+You can combine verbose with remote:
 
-2. Start tunnel:
-   ```bash
-   cloudflared tunnel --url http://localhost:3000
-   ```
-
-3. Copy the `https://` URL it generates (e.g., `https://random-name.trycloudflare.com`)
-4. Share this URL with your partner - works anywhere!
-
-**Option C: ngrok (Anywhere, Simple Setup)**
-
-Another great option for remote access:
-
-1. Sign up for free at https://ngrok.com
-2. Install ngrok:
-   ```bash
-   # Download from: https://ngrok.com/download
-   # Or use package manager:
-
-   # Mac (Homebrew)
-   brew install ngrok
-
-   # Windows (Chocolatey)
-   choco install ngrok
-
-   # Linux (Snap)
-   snap install ngrok
-   ```
-
-3. Authenticate (one-time):
-   ```bash
-   ngrok config add-authtoken YOUR_TOKEN_FROM_NGROK_DASHBOARD
-   ```
-
-4. Start tunnel:
-   ```bash
-   ngrok http 3000
-   ```
-
-5. Copy the `https://` URL (e.g., `https://abc123.ngrok-free.app`)
-6. Share this URL with your partner!
-
-**Which Option Should I Use?**
-- **Same WiFi**: Fastest, most private, works offline
-- **Cloudflare Tunnel**: Free, no signup, perfect for quick remote access
-- **ngrok**: Free tier available, more reliable long-term, includes request inspection
-
-## First Use
-
-1. **Toggle to your name** at the top
-2. **Click "Add idea"**
-3. **Enter a date idea:**
-   - Description: "Take a cooking class"
-   - Tags: "food, learning, indoor"
-   - Video: Paste a YouTube link (optional)
-4. **Rate it** with stars
-5. **Switch to partner's name** and rate independently
-6. **Click tags** to filter by category
+```bash
+node server.js --verbose --remote
+# or
+node server.js -v --ngrok
+```
 
 ## Pro Tips
 
-- ⭐ Rate honestly and independently
-- 🏷️ Use consistent tags (food, outdoor, quick, etc.)
-- 💾 Export regularly as backup
-- 🎬 YouTube links = auto thumbnails
-- 🔍 Search works on descriptions AND tags
+### Best Practices
+- 💾 **Export regularly** - Settings → Export to backup
+- ⭐ **Rate independently** - Don't peek at partner's rating!
+- 🎨 **Choose your theme** - Settings → Pick your favorite color
+- 📱 **Add to home screen** - Safari/Chrome → "Add to Home Screen"
+
+### View Modes
+- **List Mode** - See all ideas at once
+- **Swipe Mode** - Tinder-style card swiping
+- Switch anytime with the toggle at top
+
+### View Filters
+- **All Ideas** - Everything
+- **Unrated** - Just what you haven't rated
+- **Would (3+)** - Ideas both partners like (3+ hearts)
+
+### Emoji Code Tips
+- **Remember your code!** Write it down first time
+- **Make it memorable** - Pick emojis you like
+- **Check Settings** - Your code is shown in Settings
+- **Different codes** - Each partner needs unique code
 
 ## Troubleshooting
 
-**Can't connect from phone?**
-- Same WiFi? ✓
-- Firewall blocking? ✓
-- Correct IP? ✓
+### Can't access from phone?
 
-**Port 3000 in use?**
-Edit `server.js` line 6:
+**Check these:**
+1. ✅ Both devices on **same WiFi network**
+2. ✅ Using the **exact IP** shown in server output
+3. ✅ Firewall not blocking port 3000
+   - Windows: Windows Defender Firewall → Allow an app
+   - Mac: System Preferences → Security → Firewall
+   - Linux: `sudo ufw allow 3000/tcp`
+4. ✅ VPN disabled on both devices
+
+**Try this:**
+```bash
+npm run verbose
+```
+Then try connecting - you'll see if requests are reaching the server.
+
+### Port 3000 already in use?
+
+Edit `server.js` line 17:
 ```javascript
-const PORT = 3001;  // or any other port
+const PORT = 3001;  // Change to any available port
 ```
 
-## That's It!
+### Forgot emoji code?
 
-You're ready to start planning date nights! 💕
+Check Settings while logged in, or:
+1. Open `preferences.json` in a text editor
+2. Find `"emojiCode": ["😍","🔥","🌈","✨"]`
+3. That's your code!
 
-For more details, see README.md
+### Server won't start?
+
+```bash
+# Check Node.js installed
+node --version
+
+# Should show v16.0.0 or newer
+
+# Reinstall dependencies
+rm -rf node_modules
+npm install
+
+# Try again
+npm start
+```
+
+### Still stuck?
+
+Run verbose mode and look for error messages:
+```bash
+npm run verbose
+```
+
+## Stopping the Server
+
+Press `Ctrl+C` in the terminal where it's running.
+
+## Next Steps
+
+- Read `README.md` for full documentation
+- Check `NETWORK_SETUP.md` for detailed network configuration
+- See `public/ICONS.md` to customize home screen icon
+- Explore Settings for theme customization and backups
+
+---
+
+**That's it! Start planning amazing date nights! 💕**
