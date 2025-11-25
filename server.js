@@ -800,9 +800,13 @@ async function startNgrokTunnel() {
 
   try {
     console.log(`🌍 Starting ngrok tunnel...`);
+    console.log(`\n🔍 DEBUG: Checking ngrok configuration sources...`);
 
     // Try to load local ngrok config
     let ngrokConfig = await readNgrokConfig();
+
+    console.log(`🔍 DEBUG: ngrok.config.json contents:`, ngrokConfig);
+    console.log(`🔍 DEBUG: NGROK_AUTHTOKEN env var:`, process.env.NGROK_AUTHTOKEN ? 'SET' : 'NOT SET');
 
     // Priority order for authtoken:
     // 1. Environment variable NGROK_AUTHTOKEN
@@ -813,19 +817,29 @@ async function startNgrokTunnel() {
 
     if (process.env.NGROK_AUTHTOKEN) {
       options.authtoken = process.env.NGROK_AUTHTOKEN;
-      console.log('   Using authtoken from NGROK_AUTHTOKEN environment variable');
+      console.log('   ✓ Using authtoken from NGROK_AUTHTOKEN environment variable');
+      console.log(`   🔍 DEBUG: Token length: ${options.authtoken.length} chars`);
     } else if (ngrokConfig && ngrokConfig.authtoken && ngrokConfig.authtoken.trim()) {
       options.authtoken = ngrokConfig.authtoken.trim();
-      console.log('   Using authtoken from ngrok.config.json');
+      console.log('   ✓ Using authtoken from ngrok.config.json');
+      console.log(`   🔍 DEBUG: Token length: ${options.authtoken.length} chars`);
+      console.log(`   🔍 DEBUG: Token starts with: ${options.authtoken.substring(0, 10)}...`);
     } else {
-      console.log('   Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
+      console.log('   ✓ Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
+      console.log('   🔍 DEBUG: No authtoken in config file or env var');
     }
+
+    console.log(`\n🔍 DEBUG: ngrok.connect() options:`, JSON.stringify(options, null, 2));
+    console.log(`🔍 DEBUG: Attempting connection...\n`);
 
     const url = await ngrok.connect(options);
     console.log(`✓ ngrok tunnel established: ${url}`);
     return url;
   } catch (error) {
-    console.error('⚠️  ngrok tunnel failed:', error.message);
+    console.error('⚠️  ngrok tunnel failed!');
+    console.error('🔍 DEBUG: Full error object:', error);
+    console.error('🔍 DEBUG: Error message:', error.message);
+    console.error('🔍 DEBUG: Error stack:', error.stack);
 
     // Provide helpful setup instructions
     console.log('\n' + '='.repeat(60));
