@@ -527,6 +527,21 @@
     display:flex; gap:10px; padding:16px;
     padding-bottom:calc(16px + env(safe-area-inset-bottom));
     border-top:1px solid var(--border); background:var(--panel);
+    align-items:center;
+  }
+  .sheet .footer .grow{flex:1}
+  .saving-status{
+    display:none; align-items:center; gap:8px;
+    color:var(--subtle); font-size:14px;
+  }
+  .saving-status.active{ display:flex; }
+  .spinner{
+    width:16px; height:16px; border:2px solid var(--muted);
+    border-top-color:var(--brand); border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform:rotate(360deg); }
   }
 
   .view-mode-toggle{
@@ -803,7 +818,11 @@
       <button class="btn primary hidden" id="restoreBtn" onclick="formHandlers.restore()">↺ Restore</button>
       <button class="btn ghost" onclick="ui.closeForm()">Cancel</button>
       <div class="grow"></div>
-      <button class="btn primary" form="form">Save</button>
+      <div class="saving-status" id="savingStatus">
+        <div class="spinner"></div>
+        <span>Saving...</span>
+      </div>
+      <button class="btn primary" form="form" id="saveBtn">Save</button>
     </div>
   </div>
 </dialog>
@@ -2012,8 +2031,16 @@ const stars = {
 
 /* ---------- Form handlers ---------- */
 const formHandlers = {
+  isSaving: false,
+
   async save(e){
     e.preventDefault();
+
+    // Prevent duplicate submissions
+    if (this.isSaving) {
+      return;
+    }
+
     const id    = document.getElementById('id').value.trim();
     const desc  = document.getElementById('desc').value.trim();
     const video = document.getElementById('video').value.trim();
@@ -2036,13 +2063,10 @@ const formHandlers = {
 
     const myR = stars.tmp.my|0;
 
-    // Show loading state
-    const saveBtn = e.target.querySelector('button[type="submit"]') || document.querySelector('button[form="form"]');
-    const originalText = saveBtn.textContent;
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-
-    let shouldCloseForm = false;
+    // Show saving indicator
+    this.isSaving = true;
+    const savingStatus = document.getElementById('savingStatus');
+    if (savingStatus) savingStatus.classList.add('active');
 
     try {
       if (id){
@@ -2082,25 +2106,22 @@ const formHandlers = {
       }
 
       await loadIdeas();
-      shouldCloseForm = true;
 
       if (state.mode === 'swipe') {
         ui.renderSwipe();
       } else {
         ui.render();
       }
+
+      ui.closeForm();
     } catch (error) {
       console.error('Save error:', error);
       const errorMsg = error.message || 'Could not save your idea. Please try again.';
       notifications.show('Save Failed', errorMsg, 'error');
     } finally {
-      // Always re-enable button, unless we're closing the form
-      if (shouldCloseForm) {
-        ui.closeForm();
-      } else {
-        saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
-      }
+      // Always reset saving state
+      this.isSaving = false;
+      if (savingStatus) savingStatus.classList.remove('active');
     }
   },
   async del(idOpt){
