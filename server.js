@@ -806,27 +806,33 @@ async function startNgrokTunnel() {
     // Try to load local ngrok config
     let ngrokConfig = await readNgrokConfig();
 
-    // Build ngrok options
-    const options = {
-      addr: PORT,
-      region: NGROK_REGION
-    };
-
     // Priority order for authtoken:
     // 1. Environment variable NGROK_AUTHTOKEN
     // 2. Local ngrok.config.json file
     // 3. System ngrok config (handled by ngrok library automatically)
 
+    let options;
+
     if (process.env.NGROK_AUTHTOKEN) {
-      options.authtoken = process.env.NGROK_AUTHTOKEN;
+      options = {
+        addr: PORT,
+        authtoken: process.env.NGROK_AUTHTOKEN,
+        region: NGROK_REGION
+      };
       console.log('   Using authtoken from NGROK_AUTHTOKEN environment variable');
+      console.log(`   Region: ${NGROK_REGION}`);
     } else if (ngrokConfig && ngrokConfig.authtoken && ngrokConfig.authtoken.trim()) {
-      options.authtoken = ngrokConfig.authtoken.trim();
+      options = {
+        addr: PORT,
+        authtoken: ngrokConfig.authtoken.trim(),
+        region: ngrokConfig.region || NGROK_REGION
+      };
       console.log('   Using authtoken from ngrok.config.json');
+      console.log(`   Region: ${ngrokConfig.region || NGROK_REGION}`);
     } else {
-      console.log('   Using system ngrok configuration');
-      // Don't pass authtoken - let ngrok use system config
-      delete options.authtoken;
+      // Use system config - only pass port, let ngrok handle everything else
+      options = { addr: PORT };
+      console.log('   Using system ngrok configuration (~/.ngrok2/ngrok.yml)');
     }
 
     const url = await ngrok.connect(options);
